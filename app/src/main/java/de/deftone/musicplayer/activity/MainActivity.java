@@ -11,6 +11,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,6 +19,7 @@ import android.widget.ListView;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,6 +32,12 @@ import de.deftone.musicplayer.model.Song;
 public class MainActivity extends AppCompatActivity {
     //todo: nach permission fragen!! so wie bei tanss app
     //todo: recycler view statt listview
+    //todo: die funktionalitaet der menu buttons richtig machen
+    //todo: in der liste suchen, nicth neue activity zum suchen (mit recycler view einfacher??)
+
+    public static final String INTENT_SONGLIST = "songlist";
+    public static final String INTENT_SONG_ID = "song_id";
+
     private List<Song> songList;
     private ListView songView;
     private File musicMainFolder;
@@ -54,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -63,14 +72,20 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                return true;
+            case R.id.action_search:
+                //bei klick auf seach symbol soll sich neue activity oeffnen onClickSearchButton oder so, dort auch searchView implenentieren
+                Intent searchIntent = new Intent(this, SearchActivity.class);
+                searchIntent.putExtra(INTENT_SONGLIST, (Serializable) songList);
+                startActivity(searchIntent);
+                return true;
+            case R.id.action_end:
+//                stopService(playIntent);
+//                musicService = null;
+                System.exit(0);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -186,6 +201,8 @@ public class MainActivity extends AppCompatActivity {
         if (isSong(position)) {
             //open play activity
             Intent playIntent = new Intent(this, PlayActivity.class);
+            playIntent.putExtra(INTENT_SONGLIST, (Serializable) songList);
+            playIntent.putExtra(INTENT_SONG_ID, position);
             startActivity(playIntent);
         } else {
             // sonst ist es ein Directory und wir müssen tiefer gehen

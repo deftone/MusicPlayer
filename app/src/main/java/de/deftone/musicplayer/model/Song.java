@@ -1,12 +1,13 @@
 package de.deftone.musicplayer.model;
 
 import java.io.File;
+import java.io.Serializable;
 
 /**
  * Created by deftone on 02.04.18.
  */
 
-public class Song {
+public class Song implements Serializable {
     private long id;
     private String title;
     private String artist;

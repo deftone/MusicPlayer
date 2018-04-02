@@ -8,15 +8,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -25,79 +23,83 @@ import de.deftone.musicplayer.R;
 import de.deftone.musicplayer.model.Song;
 import de.deftone.musicplayer.service.MusicService;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
+import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
+//todo: es wird der erste titel abgespielt, nicht der von der uebergebenen id
 
-// einen listener auf den player machen, der
-// todo: play und pause zwar einheitlich in gui oder notification, aber nicht daziwschen synchronisiert :(
-//todo: 04.07.17 next und prev im screenlock reparieren
-//todo: suche schliessen
-//todo: ganz am ende: playactivity neue activity machen wenn ein lied angeklickt wird, dort dann seekbar, albumcover etc
+//todo: layout ueberarbeiten
 //todo: albumcover hinzufuegen
+
+// todo: play und pause zwar einheitlich in gui oder notification, aber nicht daziwschen synchronisiert :(
+//todo: 04.07.17 next und prev im screenlock reparieren ???
+//todo: suche schliessen ???
 
 /**
  * Created by deftone on 02.04.18.
  */
 
-class PlayActivity extends AppCompatActivity {
+public class PlayActivity extends AppCompatActivity {
 
     private List<Song> songList;
-    private ListView songView;
-    private TextView songTextView;
-    private TextView positionTextView;
-    private ImageView albumCover;
-    private SeekBar seekBar;
+    private int songId;
     private Handler seekHandler = new Handler();
+    private ServiceConnection musicConnection;
     private MusicService musicService;
-    private Intent playIntent;
+    private Intent musicServiceIntent;
     private boolean musicBound = false;
     private boolean paused = false;
-    private boolean playbackPaused = false;
+    private boolean playbackPaused = true;
     private boolean playbackStopped = false;
 
-    private File musicMainFolder;
+    private String TAG = "test: ";
+    @BindView(R.id.play_pause_button)
+    ImageButton playPauseButton;
+    @BindView(R.id.repeatSong_button)
+    ImageButton repeatSongBtton;
+    @BindView(R.id.shuffle_button)
+    ImageButton shuffleButton;
+    @BindView(R.id.song_title)
+    TextView songTextView;
+    @BindView(R.id.song_position)
+    TextView positionTextView;
+    @BindView(R.id.seek_bar)
+    SeekBar seekBar;
 
-    private ImageButton playPauseButton;
-    private ImageButton repeatSongBtton;
-    private ImageButton shuffleButton;
-
-    //connect to the service
-    private ServiceConnection musicConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
-            //get service
-            musicService = binder.getService();
-            //pass list
-            musicService.setList(songList);
-            //
-            musicService.setSongTextView(songTextView);
-            musicService.setPositionTextView(positionTextView);
-            musicBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            musicBound = false;
-        }
-    };
+    @BindView(R.id.cover)
+    ImageView albumCover;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play);
         ButterKnife.bind(this);
-        songView = (ListView) findViewById(R.id.song_list);
-        songTextView = (TextView) findViewById(R.id.song_title);
-        positionTextView = (TextView) findViewById(R.id.song_position);
-        seekBar = (SeekBar) findViewById(R.id.seek_bar);
-        albumCover = (ImageView) findViewById(R.id.cover);
-        playPauseButton = (ImageButton) findViewById(R.id.playPauseButton);
-        repeatSongBtton = (ImageButton) findViewById(R.id.action_repeatSong);
-        shuffleButton = (ImageButton) findViewById(R.id.action_shuffle);
-        songList = new ArrayList<>();
+
+        songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
+        songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
+
+        //init with songtigle and "play" symbol
+        songTextView.setText(songList.get(songId).getTitle());
+        playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+
+        musicConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+                //get service
+                musicService = binder.getService();
+                //pass list
+                musicService.setList(songList);
+                //
+                musicService.setSongTextView(songTextView);
+                musicService.setPositionTextView(positionTextView);
+                musicBound = true;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                musicBound = false;
+            }
+        };
 
         //hier der zusaetzliche thread, der seekbar nutzt, kann erst hier aufgerufen werden
         //zyklische hintergrundprozesse sollten immer im on create starten (laeuft im hintergrund weiter)
@@ -116,71 +118,17 @@ class PlayActivity extends AppCompatActivity {
 
             }
         });
-        //Objekt der inneren Klasse erzeugen und nutzen
-        seekBar.setOnSeekBarChangeListener(new MySeekbarChangeListener());
-
+        seekBar.setOnSeekBarChangeListener(new SeekbarChangeListener());
     }
 
-    //innere Klasse fuer den seekbarChangeListener, alternativ auch richtige eigene klasse machen (zu umstaendlich)
-    //der Listener fuehrt onProgressChanged automatisch auf, wenn event gefeuert wird
-    private class MySeekbarChangeListener implements SeekBar.OnSeekBarChangeListener {
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-        }
-
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-        }
-
-        //diese methode wird immer dann ausgefuehrt, wenn finger auf seekbar spielt
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            //nur playing evtl mal rausnehmen
-            if (musicService.isPng() && fromUser) {
-                seekTo(progress);
-            }
-        }
-    }
-
-    //zusaetzlich die Menueleiste oben einbinden
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(menu);
-        MenuInflater menuInflater = getMenuInflater();
-        menuInflater.inflate(R.menu.menu_play, menu);
-        return true;
-    }
-
-    //und in dieser diese zusaetzlichen Buttons
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_search:
-                //bei klick auf seach symbol soll sich neue activity oeffnen onClickSearchButton oder so, dort auch searchView implenentieren
-                Intent searchIntent = new Intent(this, SearchActivity.class);
-                searchIntent.putExtra("list", (Serializable) songList);
-                startActivity(searchIntent);
-                break;
-            case R.id.action_end:
-                stopService(playIntent);
-                musicService = null;
-                System.exit(0);
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    // Diese Methoden sind für das Starten, Stoppen, Zerstören und Wiederherstellen der ACTIVITY!
-    //onCreate setzt Activity auf, dann andere... und dann onStart, ruft die erzeugte Activity auf
-    //hier sind alle variablen aus onCreate initialisiert
     @Override
     protected void onStart() {
         super.onStart();
         //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
-        if (playIntent == null) {
-            playIntent = new Intent(this, MusicService.class);
-            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            startService(playIntent);
+        if (musicServiceIntent == null) {
+            musicServiceIntent = new Intent(this, MusicService.class);
+            bindService(musicServiceIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(musicServiceIntent);
         }
     }
 
@@ -191,13 +139,13 @@ class PlayActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        //aufraeumen
-        stopService(playIntent);
+        stopService(musicServiceIntent);
         musicService = null;
+        musicBound = false;
+        playbackStopped = false;
         super.onDestroy();
     }
 
-    //paused von der acitvity, nicht vom player!!
     @Override
     protected void onResume() {
         super.onResume();
@@ -213,98 +161,68 @@ class PlayActivity extends AppCompatActivity {
     }
 
 
-    public void onPlayNextButton(View view) {
+    /**
+     * buttons
+     **/
+
+    @OnClick(R.id.play_next_button)
+    void onPlayNextButton() {
         String songtitle = musicService.playNext(true);
-        if (playbackPaused) {
-            playbackPaused = false;
-        }
-        //jetzt wird der Play-Button in eine Pause-Button umgewandelt
+        songTextView.setText(songtitle);
+        //no matter what is was before, player ist im zustand playing
+        playbackPaused = false;
         playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
-        playPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onPauseButton(v);
-            }
-        });
     }
 
-    public void onPlayPrevButton(View view) {
+    @OnClick(R.id.play_previous_button)
+    void onPlayPrevButton() {
         String songtitle = musicService.playPrev(true);
-        if (playbackPaused) {
-            playbackPaused = false;
-        }
-        //jetzt wird der Play-Button in eine Pause-Button umgewandelt
+        songTextView.setText(songtitle);
+        //no matter what is was before, player ist im zustand playing
+        playbackPaused = false;
         playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
-        playPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onPauseButton(v);
-            }
-        });
     }
 
-    public void onStartButton(View view) {
-        playbackStopped = false;
-        String songtitle = musicService.go();
-        //jetzt wird der Play-Button in ein Pause-Button umgewandelt: icon und listener
-        playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
-        playPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onPauseButton(v);
-            }
-        });
-    }
 
-    @OnClick(R.id.playPauseButton)
+    @OnClick(R.id.play_pause_button)
     void onPlayPauseButton() {
-        playbackPaused = true;
-        musicService.pausePlayer();
-        //jetzt wird der Pause-Button in eine Play-Button umgewandelt
-        playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
-        playPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onStartButton(v);
-            }
-        });
+        if (playbackPaused) {
+            //playback war pausiert, d.h. jetzt wieder abspielen
+            playbackPaused = false;
+            playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
+            String songtitle = musicService.go();
+            //songtitle muss nicht gesetzt werden?
+
+        } else {
+            //playback hat gespielt, d.h. jetzt pausieren
+            playbackPaused = true;
+            playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+            musicService.pausePlayer();
+        }
+
     }
 
-    public void onPauseButton(View view) {
-        playbackPaused = true;
-        musicService.pausePlayer();
-        //jetzt wird der Pause-Button in eine Play-Button umgewandelt
-        playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
-        playPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onStartButton(v);
-            }
-        });
-    }
 
-    public void onStopButton(View view) {
+    @OnClick(R.id.stop_button)
+    void onStopButton() {
         playbackStopped = true;
+        playbackPaused = true;
         musicService.pausePlayer();
         musicService.seek(0);
         //auch hier muss der Pause Button in ein Start Button umgewandelt werden
         playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
-        playPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onStartButton(v);
-            }
-        });
     }
 
-    public void onShuffleButton(View view) {
+    @OnClick(R.id.shuffle_button)
+    void onShuffleButton() {
         if (musicService.setShuffle())
             shuffleButton.setImageResource(R.drawable.random_invers);
         else
             shuffleButton.setImageResource(R.drawable.random);
     }
 
-    public void onRepeatSongButton(View view) {
+    @OnClick(R.id.repeatSong_button)
+    void onRepeatSongButton() {
         if (musicService.setRepeatSong())
             repeatSongBtton.setImageResource(R.drawable.repeat_invers);
         else
@@ -330,10 +248,6 @@ class PlayActivity extends AppCompatActivity {
         }
     }
 
-    //fuer seekbar scrollen
-    public void seekTo(int progress) {
-        musicService.seek(progress);
-    }
 
     //ob Lied laeuft ebenfalls aus musicService
     public boolean isPlaying() {
@@ -342,5 +256,25 @@ class PlayActivity extends AppCompatActivity {
         return false;
     }
 
+    //innere Klasse fuer den seekbarChangeListener, da der musicService sonst null ist
+    private class SeekbarChangeListener implements SeekBar.OnSeekBarChangeListener {
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+        }
+
+        //diese methode wird immer dann ausgefuehrt, wenn finger auf seekbar spielt
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            //nur playing evtl mal rausnehmen
+            if (musicService.isPng() && fromUser) {
+                musicService.seek(progress);
+            }
+        }
+    }
 
 }

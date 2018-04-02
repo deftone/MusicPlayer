@@ -18,48 +18,45 @@
             android:gravity="center">
 
             <ImageButton
+                android:id="@+id/play_previous_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_span="1"
-                android:onClick="onPlayPrevButton"
                 android:src="@drawable/ic_skip_previous_black_24dp" />
 
-            <!--dieser Button wird durch die Main Activity gesetzt, nur beim Starten der app soll es ein Startbutton sein -->
+            <!--dieser Button wird durch die PlayActivity gesetzt, nur beim Starten der activity soll es ein Startbutton sein -->
             <ImageButton
-                android:id="@+id/playPauseButton"
+                android:id="@+id/play_pause_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_pause_black_24dp" />
-            <!--android:onClick="onPauseButton"-->
+                android:src="@drawable/ic_play_circle_outline_black_24dp" />
 
             <ImageButton
+                android:id="@+id/play_next_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_span="1"
-                android:onClick="onPlayNextButton"
                 android:src="@drawable/ic_skip_next_black_24dp" />
 
             <ImageButton
+                android:id="@+id/stop_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_span="1"
-                android:onClick="onStopButton"
                 android:src="@drawable/ic_stop_black_24dp" />
 
             <ImageButton
-                android:id="@+id/action_repeatSong"
+                android:id="@+id/repeatSong_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_span="1"
-                android:onClick="onRepeatSongButton"
                 android:src="@drawable/repeat" />
 
             <ImageButton
-                android:id="@+id/action_shuffle"
+                android:id="@+id/shuffle_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_span="1"
-                android:onClick="onShuffleButton"
                 android:src="@drawable/random" />
 
 

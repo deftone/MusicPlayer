@@ -14,6 +14,8 @@ import de.deftone.musicplayer.R;
 import de.deftone.musicplayer.adapter.SongAdapter;
 import de.deftone.musicplayer.model.Song;
 
+import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
+
 /**
  * Created by deftone on 02.04.18.
  */
@@ -35,7 +37,7 @@ import de.deftone.musicplayer.model.Song;
             setContentView(R.layout.activity_search);
             searchView = (SearchView) findViewById(R.id.searchView);
 
-            songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra("list"));
+            songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
             // TODO: songs rauswerfen (id != -1)
             songListBackup = new ArrayList<>(songList);
             songView = (ListView) findViewById(R.id.song_list);
