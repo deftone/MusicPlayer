@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFF"
+    android:gravity="center"
+    tools:context=".activity.PlayActivity">
+
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <TableRow
+            android:background="#90caf9"
+            android:gravity="center">
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_span="1"
+                android:onClick="onPlayPrevButton"
+                android:src="@drawable/ic_skip_previous_black_24dp" />
+
+            <!--dieser Button wird durch die Main Activity gesetzt, nur beim Starten der app soll es ein Startbutton sein -->
+            <ImageButton
+                android:id="@+id/playPauseButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_pause_black_24dp" />
+            <!--android:onClick="onPauseButton"-->
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_span="1"
+                android:onClick="onPlayNextButton"
+                android:src="@drawable/ic_skip_next_black_24dp" />
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_span="1"
+                android:onClick="onStopButton"
+                android:src="@drawable/ic_stop_black_24dp" />
+
+            <ImageButton
+                android:id="@+id/action_repeatSong"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_span="1"
+                android:onClick="onRepeatSongButton"
+                android:src="@drawable/repeat" />
+
+            <ImageButton
+                android:id="@+id/action_shuffle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_span="1"
+                android:onClick="onShuffleButton"
+                android:src="@drawable/random" />
+
+
+        </TableRow>
+
+        <TableRow android:background="#e3f2fd">
+
+            <SeekBar
+                android:id="@+id/seek_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginBottom="20dp"
+                android:layout_marginTop="20dp"
+                android:layout_weight="1" />
+        </TableRow>
+
+        <TableRow android:background="#90caf9">
+
+            <TextView
+                android:id="@+id/song_position"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_span="5"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textSize="7pt"
+                android:textStyle="bold" />
+
+        </TableRow>
+
+        <TableRow android:background="#e3f2fd">
+
+
+            <TextView
+                android:id="@+id/song_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_span="5"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textSize="10pt"
+                android:textStyle="bold" />
+        </TableRow>
+
+        <TableRow android:background="#e3f2fd">
+
+
+            <ImageView
+                android:id="@+id/cover"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center" />
+
+        </TableRow>
+
+    </TableLayout>
+
+
+</LinearLayout>
