@@ -107,6 +107,7 @@
         </TableRow>
 
 
+        <!--todo: default image-->
 
             <ImageView
                 android:id="@+id/album_cover"

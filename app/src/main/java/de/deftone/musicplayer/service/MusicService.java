@@ -22,10 +22,7 @@ import android.widget.TextView;
 import java.util.List;
 import java.util.Random;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import de.deftone.musicplayer.R;
-import de.deftone.musicplayer.activity.MainActivity;
 import de.deftone.musicplayer.activity.PlayActivity;
 import de.deftone.musicplayer.model.Song;
 
@@ -35,36 +32,32 @@ import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
  * Created by deftone on 12.05.17.
  */
 
-//todo: saemtliche funktionen refactoren!!
 
 public class MusicService extends IntentService implements MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
-    //media player mit seekbar
-    private MediaPlayer player;
-    //song list
-    private List<Song> songs;
-    //current position des Songs in der Liste
-    private int songPosnInList;
-    private TextView songTextView;
-    private TextView positionTextView;
-    private ImageView albumCoverImageView;
-    private String songTitle = "";
     private static final int NOTIFY_ID = 1;
+
+    private MediaPlayer player;
     private final IBinder musicBind = new MusicBinder();
+    private List<Song> songs;
+    private int songPosnInList = 0;
+    private String songTitle = "";
     private Random rand;
     private boolean shuffle = false;
     private boolean repeat = false;
+
+    //todo: das muss hier raus!!
+    private TextView songTextView;
+    private TextView positionTextView;
+    private ImageView albumCoverImageView;
 
     public MusicService() {
         super("Heinz");
     }
 
+    @Override
     public void onCreate() {
-        //create the service
         super.onCreate();
-        //initialize position
-        songPosnInList = 0;
-        //create player
         player = new MediaPlayer();
         rand = new Random();
         initMusicPlayer();
@@ -78,6 +71,13 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         player.setOnErrorListener(this);
     }
 
+    @Override
+    public void onDestroy() {
+        stopForeground(true);
+    }
+
+
+    /** Eigenschaften des Players, die die PlayActivity setzt - das kann evtl besser gehandhabt werden? **/
     public void setList(List<Song> theSongs) {
         songs = theSongs;
     }
@@ -94,61 +94,11 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         this.albumCoverImageView = albumCoverImageView;
     }
 
-    public class MusicBinder extends Binder {
-        public MusicService getService() {
-            return MusicService.this;
-        }
-    }
-
-    //wenn app bedient wird, dann muss auch die View angepasst werden
-    public String viewsAnpassenUndPlaySong() {
-        //get song (songPosnInList ist die position in der list, nicht die position wo der track grade ist)
-//        Song songPlaying = songs.get(songPosnInList);
-        songTitle = songs.get(songPosnInList).getTitle();
-        //hier wird der titel beim starten jedes songs gesetzt
-        //die songTextView ist hier instanzvariable, wird aber in mainactivity onServiceConnected gesetzt
-        songTextView.setText(songTitle);
-        positionTextView.setText(getSongPosnAnzeige());
-        String albumCover = songs.get(songPosnInList).getAlbumCover();
-        if (albumCover.equals(NO_ALBUM_COVER)) {
-            //show default
-        } else {
-            Bitmap bm = BitmapFactory.decodeFile(albumCover);
-            albumCoverImageView.setImageBitmap(bm);
-        }
-        return playSong();
-    }
-
-    //wenn im Screensaver oder androidmenu der next/prev button gedrueckt wird, darf die gui nicht angepasst werden
-    public String playSong() {
-        player.reset();
-        //get song (songPosnInList ist die position in der list, nicht die position wo der track grade ist)
-        Song songPlaying = songs.get(songPosnInList);
-
-        songTitle = songPlaying.getTitle();
-        //get id
-        long currSong = songPlaying.getID();
-        //set uri
-        Uri trackUri = ContentUris.withAppendedId(
-                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                currSong);
-
-        try {
-            player.setDataSource(getApplicationContext(), trackUri);
-            player.prepare();
-            onPrepared();
-        } catch (Exception e) {
-            Log.e("MUSIC SERVICE", "Error setting data source", e);
-        }
-        return songTitle;
-    }
-
     public boolean setShuffle() {
         if (shuffle) shuffle = false;
         else shuffle = true;
         return shuffle;
     }
-
 
     public boolean setRepeatSong() {
         if (repeat) repeat = false;
@@ -156,14 +106,9 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         return repeat;
     }
 
-    //song wird ueber index in der Liste bestimmt
-    public void setSong(int songIndex) {
-        songPosnInList = songIndex;
-    }
 
-    //ueber den mediaplayer werden einige eigenschaften geholt
-    //current position in milliseconds
-    public int getPosn() {
+    /** Eigenschaften des Players, die die PlayActivity benoetigt **/
+    public int getCurrentPositionInSong() {
         return player.getCurrentPosition();
     }
 
@@ -190,37 +135,25 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         return player.isPlaying();
     }
 
-    //bzw gesetzt
-    public void pausePlayer() {
-        player.pause();
-    }
-
     public void seek(int posn) {
         player.seekTo(posn);
     }
 
-    public String go() {
-        player.start();
-        return songTitle;
-    }
 
-    public String playPrev(boolean oberflaecheAnpassen) {
+    /** play, pause, next, prev funktionalitaet fuer den player, wird in PlayActivity aufgerufen **/
+
+    public String playPrev(boolean updateViewComponents) {
         songPosnInList--;
         //spielt immer wieder das erste lied, wenn prev beim ersten lied angekommen ist
         //bevor die lieder starten stehen alle ordner (../ und evtl auch noch mehr)
         //daher nur pruefen ob bei prev ein ordner angetroffen wird, falls ja, dann -- wieder rueckgaengig
         if (songs.get(songPosnInList).getID() == -1)
             songPosnInList++;
-        if (oberflaecheAnpassen) {
-            songTitle = viewsAnpassenUndPlaySong();
-        } else {
-            songTitle = playSong();
-        }
+        songTitle = playSong(songPosnInList, updateViewComponents);
         return songTitle;
     }
 
-    //boolean oberflaecheAnpassen entscheidet welches playSong aufgerufen wird
-    public String playNext(boolean oberflaecheAnpassen) {
+    public String playNext(boolean updateViewComponents) {
         if (shuffle) {
             int newSong = songPosnInList;
             while (newSong == songPosnInList) {
@@ -241,31 +174,55 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
                 return "";
             }
         }
-        if (oberflaecheAnpassen) {
-            songTitle = viewsAnpassenUndPlaySong();
-        } else {
-            songTitle = playSong();
+        songTitle = playSong(songPosnInList, updateViewComponents);
+        return songTitle;
+    }
+
+    public String playSong(int songId, boolean updateViewComponentes) {
+        songPosnInList = songId;
+
+        //gui darf nur im app modus angepasst werden, wenn im Screensaver oder androidmenu der next/prev button gedrueckt wird, darf die gui nicht angepasst werden
+        if (updateViewComponentes) {
+            songTextView.setText(songs.get(songId).getTitle());
+            positionTextView.setText(getSongPosnAnzeige());
+            String albumCover = songs.get(songId).getAlbumCover();
+            if (albumCover.equals(NO_ALBUM_COVER)) {
+                //todo show default
+            } else {
+                Bitmap bm = BitmapFactory.decodeFile(albumCover);
+                albumCoverImageView.setImageBitmap(bm);
+            }
+        }
+
+        player.reset();
+
+        //wir brauchen den songtitel fuer den screenlock bzw. das androidmenu
+        songTitle = songs.get(songId).getTitle();
+
+        //set uri and start player
+        Uri trackUri = ContentUris.withAppendedId(
+                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                songs.get(songId).getID());
+        try {
+            player.setDataSource(getApplicationContext(), trackUri);
+            player.prepare();
+            player.start();
+            buildNotification();
+        } catch (Exception e) {
+            Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
         return songTitle;
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return musicBind;
-    }
-
-    @Override
-    public boolean onUnbind(Intent intent) {
-        player.stop();
-        player.release();
-        return false;
+    public void pausePlayer(){
+        player.pause();
     }
 
     //wenn lied vorbei ist
     @Override
-    public void onCompletion(MediaPlayer mp) {
+    public void onCompletion(MediaPlayer mediaPlayer) {
         if (player.getCurrentPosition() > 0) {
-            mp.reset();
+            mediaPlayer.reset();
             playNext(true);
         }
     }
@@ -276,28 +233,35 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         return false;
     }
 
-    //handelt es sich um einen Song oder einen Ordner?
-    public boolean foundSong() {
-        //Ordner haben die ID -1 und sind kein Song
-        if (songs.get(songPosnInList).getID() != -1) {
-            return true;
-        }
-        return false;
-    }
-
-    public void onPrepared() {
-        //start playback
-        player.start();
-        buildNotification();
-    }
-
+    /**
+     * damit der Player auch ausm Screenlock bedient werden kann das funktioniert nicht mehr :((((
+     **/
     @Override
-    public void onDestroy() {
-        stopForeground(true);
+    protected void onHandleIntent(@Nullable Intent intent) {
+        String action = intent != null ? intent.getAction() : "";
+        if (action != null) {
+            switch (action) {
+                //bei Pause und Play muss die Notification neu gebaut werden
+                //bei Next und Previous darf die Oberflaeche nicht angepasst werden
+                case "Pause":
+                    player.pause();
+                    buildNotification();
+                    break;
+                case "Play":
+                    player.start();
+                    buildNotification();
+                    break;
+                case "Previous":
+                    playPrev(false);
+                    break;
+                case "Next":
+                    playNext(false);
+                    break;
+            }
+        }
     }
 
     //diese Notification wird im Screenslock angezeigt
-    //auslagern, damit Play und Pause entsprechend gesetzt werden koennen
     private void buildNotification() {
         String playPause;
         int iconId;
@@ -309,8 +273,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
             iconId = R.drawable.ic_play_circle_outline_black_24dp;
         }
 
-        //oder hier PlayActivity, statt MainActivity??
-        Intent notIntent = new Intent(this, MainActivity.class);
+        Intent notIntent = new Intent(this, PlayActivity.class);
         notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendInt = PendingIntent.getActivity(this, 0,
                 notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -345,33 +308,27 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
                 .build();
 
         startForeground(NOTIFY_ID, notification);
+    }
 
+
+    //Binder... innere Klasse... fuer...?
+
+    public class MusicBinder extends Binder {
+        public MusicService getService() {
+            return MusicService.this;
+        }
     }
 
     @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
-        String action = intent != null ? intent.getAction() : "";
-        if (action != null) {
-            switch (action) {
-                //bei Pause und Play muss die Notification neu gebaut werden
-                //bei Next und Previous darf die Oberflaeche nicht angepasst werden
-                case "Pause":
-                    pausePlayer();
-                    buildNotification();
-                    break;
-                case "Play":
-                    go();
-                    buildNotification();
-                    break;
-                case "Previous":
-                    playPrev(false);
-                    break;
-                case "Next":
-                    playNext(false);
-                    break;
-            }
+    public IBinder onBind(Intent intent) {
+        return musicBind;
+    }
 
-        }
+    @Override
+    public boolean onUnbind(Intent intent) {
+        player.stop();
+        player.release();
+        return false;
     }
 
 }

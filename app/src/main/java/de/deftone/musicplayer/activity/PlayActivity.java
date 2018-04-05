@@ -28,7 +28,6 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
 //todo: es wird der erste titel abgespielt, nicht der von der uebergebenen id
 
 //todo: layout ueberarbeiten
-//todo: albumcover hinzufuegen
 
 // todo: play und pause zwar einheitlich in gui oder notification, aber nicht daziwschen synchronisiert :(
 //todo: 04.07.17 next und prev im screenlock reparieren ???
@@ -190,17 +189,13 @@ public class PlayActivity extends AppCompatActivity {
             //playback war pausiert, d.h. jetzt wieder abspielen
             playbackPaused = false;
             playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
-            //todo: hier eine neue methode, die die id entgegen nimmt, damit der ricthige song abgespielt wird
-            String songtitle = musicService.go();
-            //songtitle muss nicht gesetzt werden?
-
+            musicService.playSong(songId, true);
         } else {
             //playback hat gespielt, d.h. jetzt pausieren
             playbackPaused = true;
             playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
             musicService.pausePlayer();
         }
-
     }
 
 
@@ -243,7 +238,7 @@ public class PlayActivity extends AppCompatActivity {
     public int getCurrentPosition() {
         // hier war auch noch musicService != null && && musicService.isPng()
         if (musicBound && musicService.isPng()) {
-            return musicService.getPosn();
+            return musicService.getCurrentPositionInSong();
         } else {
             return 0;
         }
