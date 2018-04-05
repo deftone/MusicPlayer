@@ -34,6 +34,7 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
 //todo: 04.07.17 next und prev im screenlock reparieren ???
 //todo: suche schliessen ???
 
+//todo: bei play nicht den ersten song abspielen, sondern den ausgewaehlten!
 /**
  * Created by deftone on 02.04.18.
  */
@@ -64,8 +65,7 @@ public class PlayActivity extends AppCompatActivity {
     TextView positionTextView;
     @BindView(R.id.seek_bar)
     SeekBar seekBar;
-
-    @BindView(R.id.cover)
+    @BindView(R.id.album_cover)
     ImageView albumCover;
 
     @Override
@@ -89,9 +89,9 @@ public class PlayActivity extends AppCompatActivity {
                 musicService = binder.getService();
                 //pass list
                 musicService.setList(songList);
-                //
                 musicService.setSongTextView(songTextView);
                 musicService.setPositionTextView(positionTextView);
+                musicService.setAlbumCoverImageView(albumCover);
                 musicBound = true;
             }
 
@@ -190,6 +190,7 @@ public class PlayActivity extends AppCompatActivity {
             //playback war pausiert, d.h. jetzt wieder abspielen
             playbackPaused = false;
             playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
+            //todo: hier eine neue methode, die die id entgegen nimmt, damit der ricthige song abgespielt wird
             String songtitle = musicService.go();
             //songtitle muss nicht gesetzt werden?
 

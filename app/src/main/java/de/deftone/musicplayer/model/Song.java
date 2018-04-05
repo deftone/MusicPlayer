@@ -13,13 +13,15 @@ public class Song implements Serializable {
     private String artist;
     private File file;
     private String fileName;
+    private String albumCover;
 
-    public Song(long id, String title, String artist, File file, String fileName) {
+    public Song(long id, String title, String artist, File file, String fileName, String albumCover) {
         this.id = id;
         this.title = title;
         this.artist = artist;
         this.file = file;
         this.fileName = fileName;
+        this.albumCover = albumCover;
     }
 
     public String getArtist() {
@@ -40,5 +42,9 @@ public class Song implements Serializable {
 
     public String getFileName() {
         return fileName;
+    }
+
+    public String getAlbumCover() {
+        return albumCover;
     }
 }

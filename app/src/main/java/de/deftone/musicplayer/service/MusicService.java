@@ -5,6 +5,8 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.ContentUris;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -14,38 +16,41 @@ import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
 import java.util.Random;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import de.deftone.musicplayer.R;
 import de.deftone.musicplayer.activity.MainActivity;
+import de.deftone.musicplayer.activity.PlayActivity;
 import de.deftone.musicplayer.model.Song;
+
+import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 
 /**
  * Created by deftone on 12.05.17.
  */
 
+//todo: saemtliche funktionen refactoren!!
+
 public class MusicService extends IntentService implements MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
     //media player mit seekbar
     private MediaPlayer player;
-
     //song list
     private List<Song> songs;
-
     //current position des Songs in der Liste
     private int songPosnInList;
-
     private TextView songTextView;
     private TextView positionTextView;
-
+    private ImageView albumCoverImageView;
     private String songTitle = "";
     private static final int NOTIFY_ID = 1;
-
     private final IBinder musicBind = new MusicBinder();
-
     private Random rand;
     private boolean shuffle = false;
     private boolean repeat = false;
@@ -85,6 +90,10 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         this.positionTextView = positionTextView;
     }
 
+    public void setAlbumCoverImageView(ImageView albumCoverImageView) {
+        this.albumCoverImageView = albumCoverImageView;
+    }
+
     public class MusicBinder extends Binder {
         public MusicService getService() {
             return MusicService.this;
@@ -100,7 +109,13 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         //die songTextView ist hier instanzvariable, wird aber in mainactivity onServiceConnected gesetzt
         songTextView.setText(songTitle);
         positionTextView.setText(getSongPosnAnzeige());
-
+        String albumCover = songs.get(songPosnInList).getAlbumCover();
+        if (albumCover.equals(NO_ALBUM_COVER)) {
+            //show default
+        } else {
+            Bitmap bm = BitmapFactory.decodeFile(albumCover);
+            albumCoverImageView.setImageBitmap(bm);
+        }
         return playSong();
     }
 
@@ -221,7 +236,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
             songPosnInList++;
             //beim letzten lied angekommen wird wieder das letzte lied gestartet
             //voellig egal wieviele ordner am anfang der liste sind, einfach das ++ rueckgaengig machen
-            if (songPosnInList >= songs.size()-1) {
+            if (songPosnInList >= songs.size() - 1) {
                 player.stop();
                 return "";
             }
