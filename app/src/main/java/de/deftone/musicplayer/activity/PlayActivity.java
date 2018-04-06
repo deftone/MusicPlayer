@@ -25,7 +25,6 @@ import de.deftone.musicplayer.service.MusicService;
 
 import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
 import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
-//todo: es wird der erste titel abgespielt, nicht der von der uebergebenen id
 
 //todo: layout ueberarbeiten
 
@@ -33,7 +32,7 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
 //todo: 04.07.17 next und prev im screenlock reparieren ???
 //todo: suche schliessen ???
 
-//todo: bei play nicht den ersten song abspielen, sondern den ausgewaehlten!
+//todo: die anzeige ist falsch, nicht titel und band sondern wie vorher mit <unknown>
 /**
  * Created by deftone on 02.04.18.
  */
