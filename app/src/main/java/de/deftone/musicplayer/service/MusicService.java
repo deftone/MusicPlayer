@@ -20,6 +20,10 @@ import android.support.annotation.Nullable;
 //v4 ist die Superklasse, v7 ist eine Unterklasse, die aber ab API 26 deprecated ist, daher jetzt wieder v4 nehmen!
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.media.session.MediaButtonReceiver;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -53,10 +57,11 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     private List<Song> songs;
     private int songPosnInList = 0;
     private String songTitle = "";
+    private Song songPlaying;
     private Random rand;
     private boolean shuffle = false;
     private boolean repeat = false;
-
+    private boolean isPausing = false;
     private boolean isPlaying = false;
     //todo: das muss hier raus!!
     private TextView songTextView;
@@ -198,6 +203,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
 
     public String playSong(int songId, boolean updateViewComponentes) {
         songPosnInList = songId;
+        songPlaying = songs.get(songId);
         isPlaying = true;
         //gui darf nur im app modus angepasst werden, wenn im Screensaver oder androidmenu der next/prev button gedrueckt wird, darf die gui nicht angepasst werden
         if (updateViewComponentes) {
@@ -212,6 +218,10 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
             }
         }
 
+        //todo: nach pause springt es wieder auf den anfang... warum? position uebergeben? was war vorher anders?
+//        if (isPlaying)
+//            isPausing = false;
+//        else
         player.reset();
 
         //wir brauchen den songtitel fuer den screenlock bzw. das androidmenu
@@ -235,6 +245,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     public void pausePlayer() {
         player.pause();
         isPlaying = false;
+        isPausing = true;
         buildNotification();
     }
 
@@ -258,8 +269,8 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
      * <p>
      * https://developer.android.com/training/notify-user/build-notification.html
      * <p>
-     *     achtung: man muss evtl in die einstellungen und die notifiications anschalten!
-     *
+     * achtung: man muss evtl in die einstellungen und die notifiications anschalten!
+     * <p>
      * buttons sind nur bei importancd high in der notifiaction aber nicht im screenlock :(
      **/
     @Override
@@ -289,6 +300,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         }
     }
 
+    //todo: refactoren und buttons im screenlock anzeigen - geht nur wenn man expanded und dann muss man code eingeben :(
     //diese Notification wird im Screenslock angezeigt
     private void buildNotification() {
         String actionPlayPause;
@@ -321,25 +333,42 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         nextIntent.setAction(ACTION_NEXT);
         PendingIntent nextPendingIntent = PendingIntent.getService(this, 0, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentIntent(pendInt)
-                //damit man es im screenlock sieht:
-                //VISIBILITY_PUBLIC shows the notification's full content.
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                //layout: icon (depending on playing state) and titles
+        Bitmap albumCover = null;
+        if (songPlaying.getAlbumCover().equals(NO_ALBUM_COVER)) {
+            //todo show default
+        } else {
+            albumCover = BitmapFactory.decodeFile(songPlaying.getAlbumCover());
+        }
+
+        MediaSessionCompat mediaSession = new MediaSessionCompat(getApplicationContext(), "session tag");
+        MediaSessionCompat.Token token = mediaSession.getSessionToken();
+
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, CHANNEL_ID);
+        notificationBuilder
+                .setStyle(
+                        new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                                .setMediaSession(token)
+                                .setShowCancelButton(true)
+                                .setCancelButtonIntent(
+                                        MediaButtonReceiver.buildMediaButtonPendingIntent(
+                                                this, PlaybackStateCompat.ACTION_STOP)))
+                .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
                 .setSmallIcon(titleIconId)
-                .setContentTitle("Music Player")
-                .setContentText(songTitle)
-                //?? was ist ticker? macht auch keinen unterschied
-                .setTicker(songTitle)
-                //new, welche prio? bei high erscheint direkt eine, das wollten wir nicht
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                //add actions for buttons
-                .addAction(R.drawable.ic_skip_previous_black_24dp, ACTION_PREV, previousPendingIntent)
-                .addAction(actionIconId, actionPlayPause, playPausePendingIntent)
-                .addAction(R.drawable.ic_skip_next_black_24dp, ACTION_NEXT, nextPendingIntent)
-                //?? macht keinen unterschied:
-                .setOngoing(true);
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOnlyAlertOnce(true)
+                .setContentIntent(pendInt)
+                .setContentTitle(songPlaying.getTitle())
+                .setContentText(songPlaying.getArtist())
+//                .setSubText(songTitle)
+                .setLargeIcon(albumCover)
+//                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                // Add media control buttons that invoke intents in your media service
+                .addAction(R.drawable.ic_skip_previous_black_24dp, ACTION_PREV, previousPendingIntent)  // #0
+                .addAction(actionIconId, actionPlayPause, playPausePendingIntent)                       // #1
+                .addAction(R.drawable.ic_skip_next_black_24dp, ACTION_NEXT, nextPendingIntent)          // #2
+                .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this,
+                        PlaybackStateCompat.ACTION_STOP));
 
 
 //        Before you can deliver the notification on Android 8.0 and higher,
@@ -358,10 +387,19 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
             getManager().createNotificationChannel(channel);
         }
 
+        /**
+         IMPORTANCE_MAX: unused
+         IMPORTANCE_HIGH: shows everywhere, makes noise and peeks
+         IMPORTANCE_DEFAULT: shows everywhere, makes noise, but does not visually intrude
+         IMPORTANCE_LOW: shows everywhere, but is not intrusive  <-- das ist was wir wollen
+         IMPORTANCE_MIN: only shows in the shade, below the fold
+         IMPORTANCE_NONE: a notification with no importance; does not show in the shade
+         */
+
         //show notification
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         // notificationId is a unique int for each notification that you must define
-        notificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
 
     }
 

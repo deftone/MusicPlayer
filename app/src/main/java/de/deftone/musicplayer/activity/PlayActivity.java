@@ -121,6 +121,7 @@ public class PlayActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
+        //todo: hier ist der ansatzpunkt den play/pause button zu aktualisieren!
         super.onStart();
         //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
         if (musicServiceIntent == null) {
