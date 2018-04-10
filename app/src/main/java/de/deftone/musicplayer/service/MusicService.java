@@ -67,6 +67,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     private TextView songTextView;
     private TextView positionTextView;
     private ImageView albumCoverImageView;
+    private Bitmap albumCoverBitmap;
 
     public MusicService() {
         super("Heinz");
@@ -209,13 +210,11 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         if (updateViewComponentes) {
             songTextView.setText(songs.get(songId).getTitle());
             positionTextView.setText(getSongPosnAnzeige());
-            String albumCover = songs.get(songId).getAlbumCover();
-            if (albumCover.equals(NO_ALBUM_COVER)) {
-                //todo show default
-            } else {
-                Bitmap bm = BitmapFactory.decodeFile(albumCover);
-                albumCoverImageView.setImageBitmap(bm);
-            }
+            //use default cover if there is no album art
+             albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
+            if (!songs.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
+                albumCoverBitmap = BitmapFactory.decodeFile(songs.get(songId).getAlbumCover());
+            albumCoverImageView.setImageBitmap(albumCoverBitmap);
         }
 
         //todo: nach pause springt es wieder auf den anfang... warum? position uebergeben? was war vorher anders?
@@ -301,6 +300,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     }
 
     //todo: refactoren und buttons im screenlock anzeigen - geht nur wenn man expanded und dann muss man code eingeben :(
+    //schlagwort fuer google suche: Show android notification action buttons expanded by default
     //diese Notification wird im Screenslock angezeigt
     private void buildNotification() {
         String actionPlayPause;
@@ -333,13 +333,6 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         nextIntent.setAction(ACTION_NEXT);
         PendingIntent nextPendingIntent = PendingIntent.getService(this, 0, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Bitmap albumCover = null;
-        if (songPlaying.getAlbumCover().equals(NO_ALBUM_COVER)) {
-            //todo show default
-        } else {
-            albumCover = BitmapFactory.decodeFile(songPlaying.getAlbumCover());
-        }
-
         MediaSessionCompat mediaSession = new MediaSessionCompat(getApplicationContext(), "session tag");
         MediaSessionCompat.Token token = mediaSession.getSessionToken();
 
@@ -361,7 +354,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
                 .setContentTitle(songPlaying.getTitle())
                 .setContentText(songPlaying.getArtist())
 //                .setSubText(songTitle)
-                .setLargeIcon(albumCover)
+                .setLargeIcon(albumCoverBitmap)
 //                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 // Add media control buttons that invoke intents in your media service
                 .addAction(R.drawable.ic_skip_previous_black_24dp, ACTION_PREV, previousPendingIntent)  // #0

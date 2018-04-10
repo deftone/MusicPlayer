@@ -1,28 +1,20 @@
 package de.deftone.musicplayer.activity;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.MenuInflater;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ListView;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileFilter;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -36,38 +28,70 @@ import de.deftone.musicplayer.model.Song;
 
 public class MainActivity extends AppCompatActivity {
     //todo: nach permission fragen!! so wie bei tanss app
-    //todo: recycler view statt listview
-    //todo: die funktionalitaet der menu buttons richtig machen
+    //todo: equalizer in settings hinzufuegen
     //todo: in der liste suchen, nicth neue activity zum suchen (mit recycler view einfacher??)
 
     public static final String INTENT_SONGLIST = "songlist";
     public static final String INTENT_SONG_ID = "song_id";
     public static final String NO_ALBUM_COVER = "no cover available";
 
-    private List<Song> songList;
-    private ListView songView;
-    private File musicMainFolder;
+    private List<Song> songList = new ArrayList<>();
+    private AppCompatActivity mainActivity = this;
+    private RecyclerView recyclerViewSongs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        songView = (ListView) findViewById(R.id.song_list);
-        songList = new ArrayList<>();
-
         //defaultmaessig ist der Music folder der startfolder
-        musicMainFolder = Environment.getExternalStoragePublicDirectory("Music");
+        File musicMainFolder = Environment.getExternalStoragePublicDirectory("Music");
         if (getIntent().getSerializableExtra("song") == null) {
             getMusicContent(musicMainFolder);
         } else {
             File pickedFromSearch = (File) getIntent().getSerializableExtra("song");
             getMusicContent(pickedFromSearch);
         }
+
+        //recyclerview stuff
+        recyclerViewSongs = findViewById(R.id.recycler_view_song_list);
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        recyclerViewSongs.setHasFixedSize(true);
+
+        // use a linear layout manager
+        GridLayoutManager layoutManager = new GridLayoutManager(this, 1);
+        recyclerViewSongs.setLayoutManager(layoutManager);
+
+        setSongsOnRecyclerView();
     }
 
+    private void setSongsOnRecyclerView() {
+        // specify an adapter
+        SongAdapter adapter = new SongAdapter(songList);
+        recyclerViewSongs.setAdapter(adapter);
+        adapter.setListener(new SongAdapter.Listener() {
+            @Override
+            public void onClick(int position) {
+                if (isSong(position)) {
+                    //open play activity
+                    Intent playIntent = new Intent(mainActivity, PlayActivity.class);
+                    playIntent.putExtra(INTENT_SONGLIST, (Serializable) songList);
+                    playIntent.putExtra(INTENT_SONG_ID, position);
+                    startActivity(playIntent);
+                } else {
+                    // sonst ist es ein Directory und wir müssen tiefer (oder hoeher) gehen
+                    getMusicContent(songList.get(position).getFile());
+                    // und die ganze recyclerview neu bauen
+                    setSongsOnRecyclerView();
+                }
+
+            }
+        });
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -80,17 +104,13 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
+                //todo: equalizer
                 return true;
             case R.id.action_search:
                 //bei klick auf seach symbol soll sich neue activity oeffnen onClickSearchButton oder so, dort auch searchView implenentieren
                 Intent searchIntent = new Intent(this, SearchActivity.class);
                 searchIntent.putExtra(INTENT_SONGLIST, (Serializable) songList);
                 startActivity(searchIntent);
-                return true;
-            case R.id.action_end:
-//                stopService(playIntent);
-//                musicService = null;
-                System.exit(0);
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -100,10 +120,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         getMusicContent(songList.get(0).getFile());
+        // und die ganze recyclerview neu bauen
+        setSongsOnRecyclerView();
     }
 
     //zuerst die Musik holen (d.h. die Liste mit Ordnern oder Liedern fuellen)
-    //initialisieren in onCreate und aktualisieren in songPicked
+    //initialisieren in onCreate und aktualisieren onClick bzw. onBackPressed
     public void getMusicContent(File currentFolder) {
 
         //um zum uebergeordneten ordner zu wechseln - aber nur bis zum "obersten" (/storage/emulated)
@@ -136,8 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
         Collections.sort(songList, new Comparator<Song>() {
             //return a negative integer, zero, or a positive integer as the
-            //first argument is less than, equal to, or greater than the
-            //second.
+            //first argument is less than, equal to, or greater than the second.
             @Override
             public int compare(Song s1, Song s2) {
                 if (s1.getID() == -1 && s2.getID() != -1) {
@@ -152,9 +173,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-        //jetzt die geordnete Liste in der songView anzeigen
-        songView.setAdapter(new SongAdapter(this, songList));
     }
 
     private String getAlbumCover(long albumId) {
@@ -208,31 +226,13 @@ public class MainActivity extends AppCompatActivity {
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
                 String displayName = musicCursor.getString(displayColumn);
-                //jeder song hat die selbe album id und damit auch das selbe cover, d.h. nur einmal abfragen
+                //jeder song im ordner hat die selbe album id und damit auch das selbe cover, d.h. nur einmal abfragen
                 if (albumCover.equals("")) {
-                    long albumId = musicCursor.getLong(albumIdColumn);
-                    albumCover = getAlbumCover(albumId);
+                    albumCover = getAlbumCover(musicCursor.getLong(albumIdColumn));
                 }
                 songList.add(new Song(thisId, thisTitle, thisArtist, null, displayName, albumCover));
             } while (musicCursor.moveToNext());
             musicCursor.close();
-        }
-    }
-
-    //hier ueber die List verbunden, onClick hoert auf songPicked
-    //d.h. wenn ein Song oder Ordner angeklickt wird, wird diese Methode aufgerufen
-    public void songPicked(View view) {
-        int position = Integer.parseInt(view.getTag().toString());
-
-        if (isSong(position)) {
-            //open play activity
-            Intent playIntent = new Intent(this, PlayActivity.class);
-            playIntent.putExtra(INTENT_SONGLIST, (Serializable) songList);
-            playIntent.putExtra(INTENT_SONG_ID, position);
-            startActivity(playIntent);
-        } else {
-            // sonst ist es ein Directory und wir müssen tiefer gehen
-            getMusicContent(songList.get(position).getFile());
         }
     }
 

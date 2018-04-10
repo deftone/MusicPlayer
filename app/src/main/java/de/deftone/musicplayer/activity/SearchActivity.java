@@ -3,8 +3,8 @@ package de.deftone.musicplayer.activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.ListView;
 import android.widget.SearchView;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
         private SearchView searchView;
         private List<Song> songList;
         private List<Song> songListBackup;
-        private ListView songView;
+        private RecyclerView songView;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -40,9 +40,9 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
             songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
             // TODO: songs rauswerfen (id != -1)
             songListBackup = new ArrayList<>(songList);
-            songView = (ListView) findViewById(R.id.song_list);
+            songView = findViewById(R.id.recycler_view_song_list);
             //hier wird die songliste angezeigt, wird automatisch aktualisiert, muss nur hier einmal aufgerufen werden
-            songView.setAdapter(new SongAdapter(this, songList));
+            songView.setAdapter(new SongAdapter(songList));
 
             //searchVIew
             searchView.setOnQueryTextListener(this);
@@ -65,7 +65,7 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
                 }
             }
 
-            songView.setAdapter(new SongAdapter(this, songList));
+            songView.setAdapter(new SongAdapter(songList));
             return true;
         }
 
