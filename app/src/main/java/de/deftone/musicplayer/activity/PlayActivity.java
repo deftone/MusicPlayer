@@ -4,6 +4,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -25,6 +27,7 @@ import de.deftone.musicplayer.service.MusicService;
 
 import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
 import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
+import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 
 //todo: layout ueberarbeiten
 
@@ -33,6 +36,8 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
 //todo: suche schliessen ???
 
 //todo: die anzeige ist falsch, nicht titel und band sondern wie vorher mit <unknown>
+//todo: nach pause wieder play faengt von vorne an, warum?
+
 /**
  * Created by deftone on 02.04.18.
  */
@@ -75,9 +80,15 @@ public class PlayActivity extends AppCompatActivity {
         songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
         songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
 
-        //init with songtigle and "play" symbol
+        //init with songtigle and "play" symbol and also cover
         songTextView.setText(songList.get(songId).getTitle());
         playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+        showAlbumCover(songList);
+        //diese zeilen code auch in MusicService, am besten hier eine funktion - ah, da muss man wieder saemtliches uebergeben, wenn statisch... erstmal so lassen
+        Bitmap albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
+        if (!songList.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
+            albumCoverBitmap = BitmapFactory.decodeFile(songList.get(songId).getAlbumCover());
+        albumCover.setImageBitmap(albumCoverBitmap);
 
         musicConnection = new ServiceConnection() {
             @Override
@@ -117,6 +128,9 @@ public class PlayActivity extends AppCompatActivity {
             }
         });
         seekBar.setOnSeekBarChangeListener(new SeekbarChangeListener());
+    }
+
+    private void showAlbumCover(List<Song> songList) {
     }
 
     @Override

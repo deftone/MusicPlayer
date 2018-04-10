@@ -3,7 +3,7 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:id="@+id/card_view"
     android:layout_width="match_parent"
-    android:layout_height="150dp"
+    android:layout_height="wrap_content"
     android:layout_margin="4dp"
     card_view:cardCornerRadius="4dp"
     card_view:cardElevation="2dp">
@@ -21,6 +21,8 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
             android:layout_marginLeft="4dp"
+            android:textSize="20dp"
+            android:textStyle="bold"
             android:text="song name" />
 
         <TextView
@@ -28,6 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
+            android:textSize="18dp"
             android:layout_marginLeft="4dp"
             android:text="artist name" />
 

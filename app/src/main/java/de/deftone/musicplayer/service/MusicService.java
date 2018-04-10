@@ -210,7 +210,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         if (updateViewComponentes) {
             songTextView.setText(songs.get(songId).getTitle());
             positionTextView.setText(getSongPosnAnzeige());
-            //use default cover if there is no album art
+
              albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
             if (!songs.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
                 albumCoverBitmap = BitmapFactory.decodeFile(songs.get(songId).getAlbumCover());

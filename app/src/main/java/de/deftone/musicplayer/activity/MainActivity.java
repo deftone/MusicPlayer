@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
-        recyclerViewSongs.setHasFixedSize(true);
+//        recyclerViewSongs.setHasFixedSize(true);
 
         // use a linear layout manager
         GridLayoutManager layoutManager = new GridLayoutManager(this, 1);
