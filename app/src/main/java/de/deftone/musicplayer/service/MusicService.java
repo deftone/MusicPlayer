@@ -41,6 +41,8 @@ import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
  * Created by deftone on 12.05.17.
  */
 
+//todo: buttons im screenlock anzeigen
+//todo: buttons in notification bessere groese
 
 public class MusicService extends IntentService implements MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
@@ -211,7 +213,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
             songTextView.setText(songs.get(songId).getTitle());
             positionTextView.setText(getSongPosnAnzeige());
 
-             albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
+            albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
             if (!songs.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
                 albumCoverBitmap = BitmapFactory.decodeFile(songs.get(songId).getAlbumCover());
             albumCoverImageView.setImageBitmap(albumCoverBitmap);
@@ -307,12 +309,12 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         int titleIconId, actionIconId;
         if (isPlaying) {
             actionPlayPause = ACTION_PAUSE;
-            actionIconId = R.drawable.ic_pause_black_24dp;
-            titleIconId = R.drawable.ic_play_circle_outline_black_24dp;
+            actionIconId = R.drawable.ic_pause_white_65pd;
+            titleIconId = R.drawable.ic_play_white_65pd;
         } else {
             actionPlayPause = ACTION_PLAY;
-            actionIconId = R.drawable.ic_play_circle_outline_black_24dp;
-            titleIconId = R.drawable.ic_pause_black_24dp;
+            actionIconId = R.drawable.ic_play_white_65pd;
+            titleIconId = R.drawable.ic_pause_white_65pd;
         }
 
         Intent notIntent = new Intent(this, PlayActivity.class);

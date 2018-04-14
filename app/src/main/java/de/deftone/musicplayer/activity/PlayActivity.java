@@ -35,9 +35,9 @@ import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 //todo: 04.07.17 next und prev im screenlock reparieren ???
 //todo: suche schliessen ???
 
-//todo: die anzeige ist falsch, nicht titel und band sondern wie vorher mit <unknown>
 //todo: nach pause wieder play faengt von vorne an, warum?
 
+//todo: toast wenn random oder repeat geklickt wird
 /**
  * Created by deftone on 02.04.18.
  */
@@ -82,7 +82,7 @@ public class PlayActivity extends AppCompatActivity {
 
         //init with songtigle and "play" symbol and also cover
         songTextView.setText(songList.get(songId).getTitle());
-        playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+        playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
         showAlbumCover(songList);
         //diese zeilen code auch in MusicService, am besten hier eine funktion - ah, da muss man wieder saemtliches uebergeben, wenn statisch... erstmal so lassen
         Bitmap albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
@@ -184,7 +184,7 @@ public class PlayActivity extends AppCompatActivity {
         songTextView.setText(songtitle);
         //no matter what is was before, player ist im zustand playing
         playbackPaused = false;
-        playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
+        playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
     }
 
     @OnClick(R.id.play_previous_button)
@@ -193,7 +193,7 @@ public class PlayActivity extends AppCompatActivity {
         songTextView.setText(songtitle);
         //no matter what is was before, player ist im zustand playing
         playbackPaused = false;
-        playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
+        playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
     }
 
 
@@ -202,26 +202,26 @@ public class PlayActivity extends AppCompatActivity {
         if (playbackPaused) {
             //playback war pausiert, d.h. jetzt wieder abspielen
             playbackPaused = false;
-            playPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
+            playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
             musicService.playSong(songId, true);
         } else {
             //playback hat gespielt, d.h. jetzt pausieren
             playbackPaused = true;
-            playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+            playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
             musicService.pausePlayer();
         }
     }
 
 
-    @OnClick(R.id.stop_button)
-    void onStopButton() {
-        playbackStopped = true;
-        playbackPaused = true;
-        musicService.pausePlayer();
-        musicService.seek(0);
-        //auch hier muss der Pause Button in ein Start Button umgewandelt werden
-        playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
-    }
+//    @OnClick(R.id.stop_button)
+//    void onStopButton() {
+//        playbackStopped = true;
+//        playbackPaused = true;
+//        musicService.pausePlayer();
+//        musicService.seek(0);
+//        //auch hier muss der Pause Button in ein Start Button umgewandelt werden
+//        playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+//    }
 
     @OnClick(R.id.shuffle_button)
     void onShuffleButton() {

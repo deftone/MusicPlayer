@@ -3,121 +3,175 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF"
+    android:background="@color/colorPrimaryDark"
     android:gravity="center"
-    tools:context=".activity.PlayActivity"
-    android:orientation="horizontal">
+    android:orientation="vertical"
+    tools:context=".activity.PlayActivity">
+
+    <!--albumcover-->
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="320dp">
+
+        <ImageView
+            android:id="@+id/album_cover"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:src="@drawable/default_cover" />
+    </LinearLayout>
 
 
 
-
-    <TableLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimaryDark"
+        android:gravity="center|bottom"
+        android:orientation="vertical">
 
+        <!--songtitle-->
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp">
 
-        <TableRow
-            android:background="#90caf9"
-            android:gravity="center">
-
-            <ImageButton
-                android:id="@+id/play_previous_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_span="1"
-                android:src="@drawable/ic_skip_previous_black_24dp" />
-
-            <!--dieser Button wird durch die PlayActivity gesetzt, nur beim Starten der activity soll es ein Startbutton sein -->
-            <ImageButton
-                android:id="@+id/play_pause_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_play_circle_outline_black_24dp" />
-
-            <ImageButton
-                android:id="@+id/play_next_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_span="1"
-                android:src="@drawable/ic_skip_next_black_24dp" />
-
-            <ImageButton
-                android:id="@+id/stop_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_span="1"
-                android:src="@drawable/ic_stop_black_24dp" />
-
-            <ImageButton
-                android:id="@+id/repeatSong_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_span="1"
-                android:src="@drawable/repeat" />
-
-            <ImageButton
-                android:id="@+id/shuffle_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_span="1"
-                android:src="@drawable/random" />
-
-
-        </TableRow>
-
-        <TableRow android:background="#e3f2fd">
-
-            <SeekBar
-                android:id="@+id/seek_bar"
+            <!--todo: artist dynamisch setzen-->
+            <TextView
+                android:id="@+id/song_artist"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_marginBottom="20dp"
-                android:layout_marginTop="20dp"
-                android:layout_weight="1" />
-        </TableRow>
-
-        <TableRow android:background="#90caf9">
-
-            <TextView
-                android:id="@+id/song_position"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_span="5"
-                android:layout_weight="1"
                 android:gravity="center"
-                android:textSize="7pt"
+                android:text="artist zz"
+                android:textColor="@color/white"
+                android:textSize="8pt"
                 android:textStyle="bold" />
 
-        </TableRow>
+        </LinearLayout>
 
-        <TableRow android:background="#e3f2fd">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp">
 
             <TextView
                 android:id="@+id/song_title"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_span="5"
-                android:layout_weight="1"
                 android:gravity="center"
+                android:text="song title xy"
+                android:textColor="@color/white"
                 android:textSize="10pt"
                 android:textStyle="bold" />
-        </TableRow>
+
+        </LinearLayout>
 
 
-        <!--todo: default image-->
+        <!--media buttons-->
+        <!--todo: bessere icons, besonders die aussen-->
 
-            <ImageView
-                android:id="@+id/album_cover"
-                android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="30dp">
+
+            <TableRow
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
+                android:gravity="center">
+
+                <ImageButton
+                    android:id="@+id/repeatSong_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimaryDark"
+                    android:paddingEnd="50dp"
+                    android:src="@drawable/repeat" />
 
 
+                <ImageButton
+                    android:id="@+id/play_previous_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimaryDark"
+                    android:src="@drawable/ic_skip_previous_white_55dp" />
 
-    </TableLayout>
+                <ImageButton
+                    android:id="@+id/play_pause_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimaryDark"
+                    android:src="@drawable/ic_play_white_65pd" />
 
+                <ImageButton
+                    android:id="@+id/play_next_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimaryDark"
+                    android:src="@drawable/ic_skip_next_white_55pd" />
+
+
+                <ImageButton
+                    android:id="@+id/shuffle_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimaryDark"
+                    android:paddingStart="50dp"
+                    android:src="@drawable/random" />
+
+
+            </TableRow>
+
+        </LinearLayout>
+
+        <!--seekbar and time-->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10pt"
+            android:paddingEnd="15dp"
+            android:paddingStart="15dp"
+            android:paddingTop="30dp">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/song_position"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0:00"
+                    android:textColor="@color/white"
+                    android:textSize="7pt"
+                    android:textStyle="bold" />
+
+                <SeekBar
+                    android:id="@+id/seek_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+
+                <!--todo: track length dynamisch setzen-->
+                <TextView
+                    android:id="@+id/song_length"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3:49"
+                    android:textColor="@color/white"
+                    android:textSize="7pt"
+                    android:textStyle="bold" />
+
+            </TableRow>
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>
+
+
