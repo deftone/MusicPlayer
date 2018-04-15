@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#00BCD4</color>
+    <color name="colorPrimary">#00838F</color>
     <!--<color name="colorPrimaryDark">#68A1B2</color>-->
     <!--<color name="colorPrimaryDark">#58E3FF</color>-->
-    <color name="colorPrimaryDark">#00838F</color>
+    <color name="colorPrimaryDark">#135761</color>
+    <!--<color name="colorLight">#00BCD4</color>-->
+    <color name="colorLight">#2798A8</color>
     <color name="colorAccent">#FB8C00</color>
     <color name="background">#FFCC80</color>
-    <!--brauchen wir background_toast??-->
     <color name="background_toast">#00838F</color>
     <color name="white">#FFF</color>
 </resources>

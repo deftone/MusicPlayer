@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         //wenn nicht der oberste ordner, dann liste neu befuellen
         songList.clear();
         if (!currentFolder.getAbsolutePath().equals("/storage/emulated/0")) {
-            songList.add(new Song(-1, "", "..", currentFolder.getParentFile(), "", NO_ALBUM_COVER));
+            songList.add(new Song(-1, "", "..", currentFolder.getParentFile(), "", NO_ALBUM_COVER, 0));
         }
 
         //alle ordner pfade aus aktuellem ordner holen
@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         //und der songList hinzufuegen, damit alle ordner angezeigt werden
         for (File musicFolder : foldersInCurrentFolder) {
             String folderName = musicFolder.getName().toLowerCase().replace("_", " ");
-            songList.add(new Song(-1L, folderName, "", musicFolder, folderName, NO_ALBUM_COVER));
+            songList.add(new Song(-1L, folderName, "", musicFolder, folderName, NO_ALBUM_COVER, 0));
         }
 
         //jetzt alle Songs (bzw. Ordner) holen
@@ -202,8 +202,8 @@ public class MainActivity extends AppCompatActivity {
                         MediaStore.Audio.Media.TITLE,
                         MediaStore.Audio.Media.DATA,
                         MediaStore.Audio.Media.DISPLAY_NAME,
-                        MediaStore.Audio.Media.ALBUM,
-                        MediaStore.Audio.Media.ALBUM_ID
+                        MediaStore.Audio.Media.ALBUM_ID,
+                        MediaStore.Audio.Media.DURATION,
                 },
                 MediaStore.Audio.Media.DATA + " LIKE ? AND " + MediaStore.Audio.Media.DATA + " NOT LIKE ? ",
                 new String[]{"%" + folderPath + "/%", "%" + folderPath + "/%/%"},
@@ -216,8 +216,8 @@ public class MainActivity extends AppCompatActivity {
             int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
             int artistColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int displayColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
-            int albumColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
             int albumIdColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+            int songLengthColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
 
             String albumCover = "";
             //add songs to list
@@ -226,11 +226,12 @@ public class MainActivity extends AppCompatActivity {
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
                 String displayName = musicCursor.getString(displayColumn);
+                int songLength = musicCursor.getInt(songLengthColumn);
                 //jeder song im ordner hat die selbe album id und damit auch das selbe cover, d.h. nur einmal abfragen
                 if (albumCover.equals("")) {
                     albumCover = getAlbumCover(musicCursor.getLong(albumIdColumn));
                 }
-                songList.add(new Song(thisId, thisTitle, thisArtist, null, displayName, albumCover));
+                songList.add(new Song(thisId, thisTitle, thisArtist, null, displayName, albumCover, songLength));
             } while (musicCursor.moveToNext());
             musicCursor.close();
         }

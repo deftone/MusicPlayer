@@ -38,6 +38,7 @@ import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 //todo: nach pause wieder play faengt von vorne an, warum?
 
 //todo: toast wenn random oder repeat geklickt wird
+
 /**
  * Created by deftone on 02.04.18.
  */
@@ -62,10 +63,14 @@ public class PlayActivity extends AppCompatActivity {
     ImageButton repeatSongBtton;
     @BindView(R.id.shuffle_button)
     ImageButton shuffleButton;
+    @BindView(R.id.song_artist)
+    TextView artistTextView;
     @BindView(R.id.song_title)
     TextView songTextView;
     @BindView(R.id.song_position)
     TextView positionTextView;
+    @BindView(R.id.song_length)
+    TextView songLengthTextView;
     @BindView(R.id.seek_bar)
     SeekBar seekBar;
     @BindView(R.id.album_cover)
@@ -82,6 +87,8 @@ public class PlayActivity extends AppCompatActivity {
 
         //init with songtigle and "play" symbol and also cover
         songTextView.setText(songList.get(songId).getTitle());
+        artistTextView.setText(songList.get(songId).getArtist());
+        songLengthTextView.setText(MusicService.convertMilliSecondsToMMSS(songList.get(songId).getSongLength()));
         playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
         showAlbumCover(songList);
         //diese zeilen code auch in MusicService, am besten hier eine funktion - ah, da muss man wieder saemtliches uebergeben, wenn statisch... erstmal so lassen
@@ -98,8 +105,11 @@ public class PlayActivity extends AppCompatActivity {
                 musicService = binder.getService();
                 //pass list
                 musicService.setList(songList);
+                musicService.setSongPosnInList(songId);
                 musicService.setSongTextView(songTextView);
+                musicService.setArtistTextView(artistTextView);
                 musicService.setPositionTextView(positionTextView);
+                musicService.setSongLengthTextView(songLengthTextView);
                 musicService.setAlbumCoverImageView(albumCover);
                 musicBound = true;
             }
@@ -196,7 +206,6 @@ public class PlayActivity extends AppCompatActivity {
         playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
     }
 
-
     @OnClick(R.id.play_pause_button)
     void onPlayPauseButton() {
         if (playbackPaused) {
@@ -259,7 +268,7 @@ public class PlayActivity extends AppCompatActivity {
     }
 
 
-    //ob Lied laeuft ebenfalls aus musicService
+    //ob Lied laeuft ebenfalls aus musicService - das oder zusaetzlicher boolean (playbackPaused) das hier erscheint mir sinnvoller...
     public boolean isPlaying() {
         if (musicService != null && musicBound)
             return musicService.isPng();

@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorPrimaryDark"
+    android:background="@color/colorLight"
     android:gravity="center"
     android:orientation="vertical"
     tools:context=".activity.PlayActivity">
@@ -28,7 +28,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimaryDark"
+        android:background="@color/colorLight"
         android:gravity="center|bottom"
         android:orientation="vertical">
 
@@ -39,7 +39,6 @@
             android:layout_height="wrap_content"
             android:paddingTop="10dp">
 
-            <!--todo: artist dynamisch setzen-->
             <TextView
                 android:id="@+id/song_artist"
                 android:layout_width="match_parent"
@@ -88,7 +87,7 @@
                     android:id="@+id/repeatSong_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/colorPrimaryDark"
+                    android:background="@color/colorLight"
                     android:paddingEnd="50dp"
                     android:src="@drawable/repeat" />
 
@@ -97,21 +96,21 @@
                     android:id="@+id/play_previous_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/colorPrimaryDark"
+                    android:background="@color/colorLight"
                     android:src="@drawable/ic_skip_previous_white_55dp" />
 
                 <ImageButton
                     android:id="@+id/play_pause_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/colorPrimaryDark"
+                    android:background="@color/colorLight"
                     android:src="@drawable/ic_play_white_65pd" />
 
                 <ImageButton
                     android:id="@+id/play_next_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/colorPrimaryDark"
+                    android:background="@color/colorLight"
                     android:src="@drawable/ic_skip_next_white_55pd" />
 
 
@@ -119,7 +118,7 @@
                     android:id="@+id/shuffle_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/colorPrimaryDark"
+                    android:background="@color/colorLight"
                     android:paddingStart="50dp"
                     android:src="@drawable/random" />
 
@@ -157,13 +156,11 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"/>
 
-
-                <!--todo: track length dynamisch setzen-->
                 <TextView
                     android:id="@+id/song_length"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="3:49"
+                    android:text="9:99"
                     android:textColor="@color/white"
                     android:textSize="7pt"
                     android:textStyle="bold" />

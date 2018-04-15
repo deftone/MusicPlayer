@@ -57,7 +57,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     private final IBinder musicBind = new MusicBinder();
     private NotificationManager notificationManager;
     private List<Song> songs;
-    private int songPosnInList = 0;
+    private int songPosnInList;
     private String songTitle = "";
     private Song songPlaying;
     private Random rand;
@@ -65,9 +65,11 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     private boolean repeat = false;
     private boolean isPausing = false;
     private boolean isPlaying = false;
-    //todo: das muss hier raus!!
+    //todo: das geht evtl besser, s.u.
     private TextView songTextView;
+    private TextView artistTextView;
     private TextView positionTextView;
+    private TextView songLengthTextView;
     private ImageView albumCoverImageView;
     private Bitmap albumCoverBitmap;
 
@@ -100,16 +102,28 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     /**
      * Eigenschaften des Players, die die PlayActivity setzt - das kann evtl besser gehandhabt werden?
      **/
+    public void setSongPosnInList(int id) {
+        this.songPosnInList = id;
+    }
+
     public void setList(List<Song> theSongs) {
-        songs = theSongs;
+        this.songs = theSongs;
     }
 
     public void setSongTextView(TextView songTextView) {
         this.songTextView = songTextView;
     }
 
+    public void setArtistTextView(TextView artistTextView) {
+        this.artistTextView = artistTextView;
+    }
+
     public void setPositionTextView(TextView positionTextView) {
         this.positionTextView = positionTextView;
+    }
+
+    public void setSongLengthTextView(TextView songLengthTextView) {
+        this.songLengthTextView = songLengthTextView;
     }
 
     public void setAlbumCoverImageView(ImageView albumCoverImageView) {
@@ -138,17 +152,20 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
 
     public String getSongPosnAnzeige() {
         if (isPng()) {
-            int time = player.getCurrentPosition();
-            //aktuelle Position in Sekunden
-            int secAbsolute = time / 1000;
-            //minuten und sekunden berechnen
-            int min = secAbsolute / 60;
-            int sec = secAbsolute % 60;
-            if (sec < 10)
-                return min + ":0" + sec;
-            else
-                return min + ":" + sec;
+            return convertMilliSecondsToMMSS(player.getCurrentPosition());
         } else return "0:00";
+    }
+
+    public static String convertMilliSecondsToMMSS(int time) {
+        //aktuelle Position in Sekunden
+        int secAbsolute = time / 1000;
+        //minuten und sekunden berechnen
+        int min = secAbsolute / 60;
+        int sec = secAbsolute % 60;
+        if (sec < 10)
+            return min + ":0" + sec;
+        else
+            return min + ":" + sec;
     }
 
     public int getDur() {
@@ -210,9 +227,10 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         isPlaying = true;
         //gui darf nur im app modus angepasst werden, wenn im Screensaver oder androidmenu der next/prev button gedrueckt wird, darf die gui nicht angepasst werden
         if (updateViewComponentes) {
+            artistTextView.setText(songs.get(songId).getArtist());
             songTextView.setText(songs.get(songId).getTitle());
             positionTextView.setText(getSongPosnAnzeige());
-
+            songLengthTextView.setText(convertMilliSecondsToMMSS(songs.get(songId).getSongLength()));
             albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
             if (!songs.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
                 albumCoverBitmap = BitmapFactory.decodeFile(songs.get(songId).getAlbumCover());
