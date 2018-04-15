@@ -3,8 +3,6 @@
     package="de.deftone.musicplayer">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!--es reicht nicht diese permission hier zu schreiben, man muss sie auch ueber Settings > Apps > "Your app name" > Permissions > storage setzen! -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application

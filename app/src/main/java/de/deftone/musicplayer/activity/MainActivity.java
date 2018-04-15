@@ -2,17 +2,21 @@ package de.deftone.musicplayer.activity;
 
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -27,10 +31,12 @@ import de.deftone.musicplayer.adapter.SongAdapter;
 import de.deftone.musicplayer.model.Song;
 
 public class MainActivity extends AppCompatActivity {
-    //todo: nach permission fragen!! so wie bei tanss app
     //todo: equalizer in settings hinzufuegen
     //todo: in der liste suchen, nicth neue activity zum suchen (mit recycler view einfacher??)
+    //todo: 2 card views, eine optimierte fuer artists bzw. alben - so wie bei tanss
+    //todo: merken wo man war, nicht wieder an anfang - das funktioniert glaub ich nur, wenn ich fragments benutze..
 
+    private static final String BUNDLE_RECYCLER_LAYOUT = "MainActivity.recycler.layout";
     public static final String INTENT_SONGLIST = "songlist";
     public static final String INTENT_SONG_ID = "song_id";
     public static final String NO_ALBUM_COVER = "no cover available";
@@ -38,10 +44,18 @@ public class MainActivity extends AppCompatActivity {
     private List<Song> songList = new ArrayList<>();
     private AppCompatActivity mainActivity = this;
     private RecyclerView recyclerViewSongs;
+    private int REQUEST_CODE = 12345;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //restore scroll position - hier laeuft es aber gar nicht rein... weil ja beim wechsel in die ordner nix passiert
+        if (savedInstanceState != null) {
+            Parcelable savedRecyclerLayoutState = savedInstanceState.getParcelable(BUNDLE_RECYCLER_LAYOUT);
+            recyclerViewSongs.getLayoutManager().onRestoreInstanceState(savedRecyclerLayoutState);
+        }
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -124,56 +138,81 @@ public class MainActivity extends AppCompatActivity {
         setSongsOnRecyclerView();
     }
 
+    /**
+     * man koennte den code auch so schreiben, dass neu starten nicht noetig ist, finde ich aber
+     * ein riesen aufwand an code, fuer den einmaligen initialen fall - bewusst dagegen entschieden
+     **/
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        //hier kann es weiter gehen
+        if (requestCode == REQUEST_CODE && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Rechte wurden gesetzt. Bitte App neu starten",
+                    Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "App hat keine Rechte auf die Musik zuzugreifen. Bitte Recht geben oder neustarten.",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
     //zuerst die Musik holen (d.h. die Liste mit Ordnern oder Liedern fuellen)
     //initialisieren in onCreate und aktualisieren onClick bzw. onBackPressed
     public void getMusicContent(File currentFolder) {
 
-        //um zum uebergeordneten ordner zu wechseln - aber nur bis zum "obersten" (/storage/emulated)
-        if (currentFolder.getAbsolutePath().equals("/storage/emulated"))
-            return;
+        //erst pruefen, ob rechte gegeben wurden, sonst kann nicht weiter gemacht werden:
+        int permission = this.checkSelfPermission("android.permission.READ_EXTERNAL_STORAGE");
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{"android.permission.READ_EXTERNAL_STORAGE"}, REQUEST_CODE);
+        } else {
 
-        //wenn nicht der oberste ordner, dann liste neu befuellen
-        songList.clear();
-        if (!currentFolder.getAbsolutePath().equals("/storage/emulated/0")) {
-            songList.add(new Song(-1, "", "..", currentFolder.getParentFile(), "", NO_ALBUM_COVER, 0));
-        }
+            //um zum uebergeordneten ordner zu wechseln - aber nur bis zum "obersten" (/storage/emulated)
+            if (currentFolder.getAbsolutePath().equals("/storage/emulated"))
+                return;
 
-        //alle ordner pfade aus aktuellem ordner holen
-        File[] foldersInCurrentFolder = currentFolder.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File path) {
-                return path.isDirectory();
+            //wenn nicht der oberste ordner, dann liste neu befuellen
+            songList.clear();
+            if (!currentFolder.getAbsolutePath().equals("/storage/emulated/0")) {
+                songList.add(new Song(-1, "", "..", currentFolder.getParentFile(), "", NO_ALBUM_COVER, 0));
             }
-        });
 
-        //diese ordner durchlaufen (dazu wird Song "missbraucht", id=-1 heisst es ist ein ordner)
-        //und der songList hinzufuegen, damit alle ordner angezeigt werden
-        for (File musicFolder : foldersInCurrentFolder) {
-            String folderName = musicFolder.getName().toLowerCase().replace("_", " ");
-            songList.add(new Song(-1L, folderName, "", musicFolder, folderName, NO_ALBUM_COVER, 0));
-        }
-
-        //jetzt alle Songs (bzw. Ordner) holen
-        getSongList(currentFolder.getAbsolutePath());
-
-        Collections.sort(songList, new Comparator<Song>() {
-            //return a negative integer, zero, or a positive integer as the
-            //first argument is less than, equal to, or greater than the second.
-            @Override
-            public int compare(Song s1, Song s2) {
-                if (s1.getID() == -1 && s2.getID() != -1) {
-                    // Wenn s1 ein Ordner ist, dann ist s1 < s2
-                    return -1;
-                } else if (s1.getID() != -1 && s2.getID() == -1) {
-                    // Hier das ganze Umgekehrt
-                    return 1;
-                } else {
-                    // Alles andere nach dem String den du willst sortieren
-                    return s1.getFileName().compareTo(s2.getFileName());
+            //alle ordner pfade aus aktuellem ordner holen
+            File[] foldersInCurrentFolder = currentFolder.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File path) {
+                    return path.isDirectory();
                 }
+            });
+
+            //diese ordner durchlaufen (dazu wird Song "missbraucht", id=-1 heisst es ist ein ordner)
+            //und der songList hinzufuegen, damit alle ordner angezeigt werden
+            for (File musicFolder : foldersInCurrentFolder) {
+                String folderName = musicFolder.getName().toLowerCase().replace("_", " ");
+                songList.add(new Song(-1L, folderName, "", musicFolder, folderName, NO_ALBUM_COVER, 0));
             }
-        });
+
+            //jetzt alle Songs (bzw. Ordner) holen
+            getSongList(currentFolder.getAbsolutePath());
+
+            Collections.sort(songList, new Comparator<Song>() {
+                //return a negative integer, zero, or a positive integer as the
+                //first argument is less than, equal to, or greater than the second.
+                @Override
+                public int compare(Song s1, Song s2) {
+                    if (s1.getID() == -1 && s2.getID() != -1) {
+                        // Wenn s1 ein Ordner ist, dann ist s1 < s2
+                        return -1;
+                    } else if (s1.getID() != -1 && s2.getID() == -1) {
+                        // Hier das ganze Umgekehrt
+                        return 1;
+                    } else {
+                        // Alles andere nach dem String den du willst sortieren
+                        return s1.getFileName().compareTo(s2.getFileName());
+                    }
+                }
+            });
+        }
     }
+
 
     private String getAlbumCover(long albumId) {
         Cursor albumCurser = getContentResolver().query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
@@ -243,5 +282,12 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    //save scrolling position
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(BUNDLE_RECYCLER_LAYOUT, recyclerViewSongs.getLayoutManager().onSaveInstanceState());
     }
 }

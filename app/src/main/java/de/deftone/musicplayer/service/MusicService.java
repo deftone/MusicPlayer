@@ -41,8 +41,7 @@ import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
  * Created by deftone on 12.05.17.
  */
 
-//todo: buttons im screenlock anzeigen
-//todo: buttons in notification bessere groese
+//todo: buttons im screenlock anzeigen und den code refactorn
 
 public class MusicService extends IntentService implements MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
@@ -64,7 +63,6 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     private boolean shuffle = false;
     private boolean repeat = false;
     private boolean isPausing = false;
-    private boolean isPlaying = false;
     //todo: das geht evtl besser, s.u.
     private TextView songTextView;
     private TextView artistTextView;
@@ -151,7 +149,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     }
 
     public String getSongPosnAnzeige() {
-        if (isPng()) {
+        if (isPlaying()) {
             return convertMilliSecondsToMMSS(player.getCurrentPosition());
         } else return "0:00";
     }
@@ -172,7 +170,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         return player.getDuration();
     }
 
-    public boolean isPng() {
+    public boolean isPlaying() {
         return player.isPlaying();
     }
 
@@ -222,48 +220,47 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     }
 
     public String playSong(int songId, boolean updateViewComponentes) {
-        songPosnInList = songId;
-        songPlaying = songs.get(songId);
-        isPlaying = true;
-        //gui darf nur im app modus angepasst werden, wenn im Screensaver oder androidmenu der next/prev button gedrueckt wird, darf die gui nicht angepasst werden
-        if (updateViewComponentes) {
-            artistTextView.setText(songs.get(songId).getArtist());
-            songTextView.setText(songs.get(songId).getTitle());
-            positionTextView.setText(getSongPosnAnzeige());
-            songLengthTextView.setText(convertMilliSecondsToMMSS(songs.get(songId).getSongLength()));
-            albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
-            if (!songs.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
-                albumCoverBitmap = BitmapFactory.decodeFile(songs.get(songId).getAlbumCover());
-            albumCoverImageView.setImageBitmap(albumCoverBitmap);
-        }
-
-        //todo: nach pause springt es wieder auf den anfang... warum? position uebergeben? was war vorher anders?
-//        if (isPlaying)
-//            isPausing = false;
-//        else
-        player.reset();
-
-        //wir brauchen den songtitel fuer den screenlock bzw. das androidmenu
-        songTitle = songs.get(songId).getTitle();
-
-        //set uri and start player
-        Uri trackUri = ContentUris.withAppendedId(
-                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                songs.get(songId).getID());
-        try {
-            player.setDataSource(getApplicationContext(), trackUri);
-            player.prepare();
+        if (isPausing) {
+            //wenn vorher pause war und wieder auf play gedrueckt wird muss keine gui angepasst werden
+            //und der player nur gestartet werden
+            isPausing = false;
             player.start();
-            buildNotification();
-        } catch (Exception e) {
-            Log.e("MUSIC SERVICE", "Error setting data source", e);
+        } else {
+            //wenn es das erste mal ist (weil aus liste ausgewaehlt oder next/prev, dann ist der ganze kram hier noetig:
+            songPosnInList = songId;
+            songPlaying = songs.get(songId);
+            //wir brauchen den songtitel fuer den screenlock bzw. das androidmenu
+            songTitle = songs.get(songId).getTitle();
+            //gui darf nur im app modus angepasst werden, wenn im Screensaver oder androidmenu der next/prev button gedrueckt wird, darf die gui nicht angepasst werden
+            if (updateViewComponentes) {
+                artistTextView.setText(songs.get(songId).getArtist());
+                songTextView.setText(songs.get(songId).getTitle());
+                positionTextView.setText(getSongPosnAnzeige());
+                songLengthTextView.setText(convertMilliSecondsToMMSS(songs.get(songId).getSongLength()));
+                albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
+                if (!songs.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
+                    albumCoverBitmap = BitmapFactory.decodeFile(songs.get(songId).getAlbumCover());
+                albumCoverImageView.setImageBitmap(albumCoverBitmap);
+            }
+           //set uri and start player
+            Uri trackUri = ContentUris.withAppendedId(
+                    android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    songs.get(songId).getID());
+            try {
+                player.reset();
+                player.setDataSource(getApplicationContext(), trackUri);
+                player.prepare();
+                player.start();
+                buildNotification();
+            } catch (Exception e) {
+                Log.e("MUSIC SERVICE", "Error setting data source", e);
+            }
         }
         return songTitle;
     }
 
     public void pausePlayer() {
         player.pause();
-        isPlaying = false;
         isPausing = true;
         buildNotification();
     }
@@ -301,11 +298,9 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
                 //bei Next und Previous darf die Oberflaeche nicht angepasst werden
                 case ACTION_PAUSE:
                     player.pause();
-                    isPlaying = false;
                     buildNotification();
                     break;
                 case ACTION_PLAY:
-                    isPlaying = true;
                     player.start();
                     buildNotification();
                     break;
@@ -325,14 +320,14 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     private void buildNotification() {
         String actionPlayPause;
         int titleIconId, actionIconId;
-        if (isPlaying) {
+        if (isPlaying()) {
             actionPlayPause = ACTION_PAUSE;
-            actionIconId = R.drawable.ic_pause_white_65pd;
-            titleIconId = R.drawable.ic_play_white_65pd;
+            actionIconId = R.drawable.ic_pause_black_24dp;
+            titleIconId = R.drawable.ic_play_circle_outline_black_24dp;
         } else {
             actionPlayPause = ACTION_PLAY;
-            actionIconId = R.drawable.ic_play_white_65pd;
-            titleIconId = R.drawable.ic_pause_white_65pd;
+            actionIconId = R.drawable.ic_play_circle_outline_black_24dp;
+            titleIconId = R.drawable.ic_pause_black_24dp;
         }
 
         Intent notIntent = new Intent(this, PlayActivity.class);
@@ -413,7 +408,6 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         // notificationId is a unique int for each notification that you must define
         notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
-
     }
 
     private NotificationManager getManager() {
@@ -422,7 +416,6 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         }
         return notificationManager;
     }
-
 
     //Binder... innere Klasse... fuer...?
 

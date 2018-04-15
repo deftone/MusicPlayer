@@ -10,10 +10,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,15 +33,7 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
 import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
 import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 
-//todo: layout ueberarbeiten
-
-// todo: play und pause zwar einheitlich in gui oder notification, aber nicht daziwschen synchronisiert :(
-//todo: 04.07.17 next und prev im screenlock reparieren ???
-//todo: suche schliessen ???
-
-//todo: nach pause wieder play faengt von vorne an, warum?
-
-//todo: toast wenn random oder repeat geklickt wird
+//todo: play und pause zwar einheitlich in gui oder notification, aber nicht daziwschen synchronisiert :(
 
 /**
  * Created by deftone on 02.04.18.
@@ -52,9 +48,6 @@ public class PlayActivity extends AppCompatActivity {
     private MusicService musicService;
     private Intent musicServiceIntent;
     private boolean musicBound = false;
-    private boolean paused = false;
-    private boolean playbackPaused = true;
-    private boolean playbackStopped = false;
 
     private String TAG = "test: ";
     @BindView(R.id.play_pause_button)
@@ -127,7 +120,7 @@ public class PlayActivity extends AppCompatActivity {
 
             @Override
             public void run() {
-                if (musicBound && musicService.isPng() || playbackStopped) {
+                if (musicBound && musicService.isPlaying()) {
                     //wenn playback paused ist, dann soll seekbar nicht aktualisiert werden
                     seekBar.setMax(getDuration());
                     seekBar.setProgress(getCurrentPosition());
@@ -145,7 +138,7 @@ public class PlayActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        //todo: hier ist der ansatzpunkt den play/pause button zu aktualisieren!
+        //todo: hier ist der ansatzpunkt den play/pause button zu aktualisieren! - aber hier geht es nicht rein!
         super.onStart();
         //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
         if (musicServiceIntent == null) {
@@ -165,22 +158,7 @@ public class PlayActivity extends AppCompatActivity {
         stopService(musicServiceIntent);
         musicService = null;
         musicBound = false;
-        playbackStopped = false;
         super.onDestroy();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (paused) {
-            paused = false;
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        paused = true;
     }
 
 
@@ -193,7 +171,6 @@ public class PlayActivity extends AppCompatActivity {
         String songtitle = musicService.playNext(true);
         songTextView.setText(songtitle);
         //no matter what is was before, player ist im zustand playing
-        playbackPaused = false;
         playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
     }
 
@@ -202,55 +179,65 @@ public class PlayActivity extends AppCompatActivity {
         String songtitle = musicService.playPrev(true);
         songTextView.setText(songtitle);
         //no matter what is was before, player ist im zustand playing
-        playbackPaused = false;
         playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
     }
 
     @OnClick(R.id.play_pause_button)
     void onPlayPauseButton() {
-        if (playbackPaused) {
-            //playback war pausiert, d.h. jetzt wieder abspielen
-            playbackPaused = false;
-            playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
-            musicService.playSong(songId, true);
-        } else {
+        if (isPlaying()) {
             //playback hat gespielt, d.h. jetzt pausieren
-            playbackPaused = true;
             playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
             musicService.pausePlayer();
+        } else {
+            //playback war pausiert, d.h. jetzt wieder abspielen
+            playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+            musicService.playSong(songId, true);
         }
     }
 
-
-//    @OnClick(R.id.stop_button)
-//    void onStopButton() {
-//        playbackStopped = true;
-//        playbackPaused = true;
-//        musicService.pausePlayer();
-//        musicService.seek(0);
-//        //auch hier muss der Pause Button in ein Start Button umgewandelt werden
-//        playPauseButton.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
-//    }
-
     @OnClick(R.id.shuffle_button)
     void onShuffleButton() {
-        if (musicService.setShuffle())
+        if (musicService.setShuffle()) {
             shuffleButton.setImageResource(R.drawable.random_invers);
-        else
+            showCustomToast("Shuffle on");
+        } else {
             shuffleButton.setImageResource(R.drawable.random);
+            showCustomToast("Shuffle off");
+        }
     }
 
     @OnClick(R.id.repeatSong_button)
     void onRepeatSongButton() {
-        if (musicService.setRepeatSong())
+        if (musicService.setRepeatSong()) {
             repeatSongBtton.setImageResource(R.drawable.repeat_invers);
-        else
+            showCustomToast("Repeat one song on");
+        } else {
             repeatSongBtton.setImageResource(R.drawable.repeat);
+            showCustomToast("Reapeat one song off");
+        }
+    }
+
+    private void showCustomToast(String toastText) {
+        Context context = getApplicationContext();
+        LayoutInflater inflater = getLayoutInflater();
+        // Call toast.xml file for toast layout
+        View toastview = inflater.inflate(R.layout.toast, null);
+        //set text on toast dynamically
+        TextView toastTextView = toastview.findViewById(R.id.custom_toast);
+        toastTextView.setText(toastText);
+        //create new toast
+        Toast toast = new Toast(context);
+        // Set layout to toast
+        toast.setView(toastview);
+        toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL,
+                0, 0);
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.show();
     }
 
     //laenge des Lieds, aus musicService (fuer seekbar)
     public int getDuration() {
-        if (musicService != null && musicBound && musicService.isPng()) {
+        if (musicService != null && musicBound && musicService.isPlaying()) {
             return musicService.getDur();
         } else {
             return 0;
@@ -259,8 +246,8 @@ public class PlayActivity extends AppCompatActivity {
 
     //aktuelle Stelle des Songs? aus musicService (fuer seekbar)
     public int getCurrentPosition() {
-        // hier war auch noch musicService != null && && musicService.isPng()
-        if (musicBound && musicService.isPng()) {
+        // hier war auch noch musicService != null && && musicService.isPlaying()
+        if (musicBound && musicService.isPlaying()) {
             return musicService.getCurrentPositionInSong();
         } else {
             return 0;
@@ -268,10 +255,9 @@ public class PlayActivity extends AppCompatActivity {
     }
 
 
-    //ob Lied laeuft ebenfalls aus musicService - das oder zusaetzlicher boolean (playbackPaused) das hier erscheint mir sinnvoller...
     public boolean isPlaying() {
         if (musicService != null && musicBound)
-            return musicService.isPng();
+            return musicService.isPlaying();
         return false;
     }
 
@@ -290,7 +276,7 @@ public class PlayActivity extends AppCompatActivity {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             //nur playing evtl mal rausnehmen
-            if (musicService.isPng() && fromUser) {
+            if (musicService.isPlaying() && fromUser) {
                 musicService.seek(progress);
             }
         }
