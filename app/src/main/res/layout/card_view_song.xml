@@ -14,25 +14,26 @@
         android:orientation="vertical">
 
 
-        <!--todo: layout anpassen-->
         <TextView
             android:id="@+id/card_view_song"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
             android:layout_marginLeft="4dp"
-            android:textSize="20dp"
-            android:textStyle="bold"
-            android:text="song name" />
+            android:text="song name"
+            android:textColor="@color/colorPrimary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/card_view_artist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
-            android:textSize="18dp"
             android:layout_marginLeft="4dp"
-            android:text="artist name" />
+            android:text="artist name"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="18sp" />
 
         <!--<ImageView-->
             <!--android:id="@+id/card_view_cover"-->
