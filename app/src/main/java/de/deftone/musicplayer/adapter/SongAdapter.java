@@ -50,7 +50,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
         TextView textViewArtist = cardView.findViewById(R.id.card_view_artist);
         TextView textViewTitle = cardView.findViewById(R.id.card_view_song);
         textViewTitle.setText(songs.get(position).getTitle());
-        textViewArtist.setText(songs.get(position).getArtist());
+        textViewArtist.setText(songs.get(position).getAlbum());
         cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

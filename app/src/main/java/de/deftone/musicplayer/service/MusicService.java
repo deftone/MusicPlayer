@@ -20,10 +20,7 @@ import android.support.annotation.Nullable;
 //v4 ist die Superklasse, v7 ist eine Unterklasse, die aber ab API 26 deprecated ist, daher jetzt wieder v4 nehmen!
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -40,8 +37,6 @@ import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 /**
  * Created by deftone on 12.05.17.
  */
-
-//todo: buttons im screenlock anzeigen und den code refactorn
 
 public class MusicService extends IntentService implements MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
@@ -242,7 +237,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
                     albumCoverBitmap = BitmapFactory.decodeFile(songs.get(songId).getAlbumCover());
                 albumCoverImageView.setImageBitmap(albumCoverBitmap);
             }
-           //set uri and start player
+            //set uri and start player
             Uri trackUri = ContentUris.withAppendedId(
                     android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                     songs.get(songId).getID());
@@ -314,8 +309,6 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         }
     }
 
-    //todo: refactoren und buttons im screenlock anzeigen - geht nur wenn man expanded und dann muss man code eingeben :(
-    //schlagwort fuer google suche: Show android notification action buttons expanded by default
     //diese Notification wird im Screenslock angezeigt
     private void buildNotification() {
         String actionPlayPause;
@@ -330,10 +323,10 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
             titleIconId = R.drawable.ic_pause_black_24dp;
         }
 
-        Intent notIntent = new Intent(this, PlayActivity.class);
-        notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent notificationIntent = new Intent(this, PlayActivity.class);
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendInt = PendingIntent.getActivity(this, 0,
-                notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         //playPause mit variabeln damit die Anzeige entsprechend angepasst werden kann
         Intent playPauseIntent = new Intent(this, MusicService.class);
@@ -354,29 +347,21 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, CHANNEL_ID);
         notificationBuilder
-                .setStyle(
-                        new android.support.v4.media.app.NotificationCompat.MediaStyle()
-                                .setMediaSession(token)
-                                .setShowCancelButton(true)
-                                .setCancelButtonIntent(
-                                        MediaButtonReceiver.buildMediaButtonPendingIntent(
-                                                this, PlaybackStateCompat.ACTION_STOP)))
-                .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
+                .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                        .setMediaSession(token)
+                        .setShowActionsInCompactView(0, 1, 2)
+                )
                 .setSmallIcon(titleIconId)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setOnlyAlertOnce(true)
                 .setContentIntent(pendInt)
                 .setContentTitle(songPlaying.getTitle())
                 .setContentText(songPlaying.getArtist())
-//                .setSubText(songTitle)
                 .setLargeIcon(albumCoverBitmap)
 //                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 // Add media control buttons that invoke intents in your media service
                 .addAction(R.drawable.ic_skip_previous_black_24dp, ACTION_PREV, previousPendingIntent)  // #0
                 .addAction(actionIconId, actionPlayPause, playPausePendingIntent)                       // #1
-                .addAction(R.drawable.ic_skip_next_black_24dp, ACTION_NEXT, nextPendingIntent)          // #2
-                .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this,
-                        PlaybackStateCompat.ACTION_STOP));
+                .addAction(R.drawable.ic_skip_next_black_24dp, ACTION_NEXT, nextPendingIntent);        // #2
 
 
 //        Before you can deliver the notification on Android 8.0 and higher,

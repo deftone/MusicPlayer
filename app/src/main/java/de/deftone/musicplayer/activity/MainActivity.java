@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     //todo: in der liste suchen, nicth neue activity zum suchen (mit recycler view einfacher??)
     //todo: 2 card views, eine optimierte fuer artists bzw. alben - so wie bei tanss
     //todo: merken wo man war, nicht wieder an anfang - das funktioniert glaub ich nur, wenn ich fragments benutze..
+    //todo: den band namen anzeigen - jetzt stehen ueberall die ordner namen
 
     private static final String BUNDLE_RECYCLER_LAYOUT = "MainActivity.recycler.layout";
     public static final String INTENT_SONGLIST = "songlist";
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private AppCompatActivity mainActivity = this;
     private RecyclerView recyclerViewSongs;
     private int REQUEST_CODE = 12345;
+    private String currentFolderName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
             //wenn nicht der oberste ordner, dann liste neu befuellen
             songList.clear();
             if (!currentFolder.getAbsolutePath().equals("/storage/emulated/0")) {
-                songList.add(new Song(-1, "", "..", currentFolder.getParentFile(), "", NO_ALBUM_COVER, 0));
+                songList.add(new Song(-1, "", "..", "", currentFolder.getParentFile(), "", NO_ALBUM_COVER, 0));
             }
 
             //alle ordner pfade aus aktuellem ordner holen
@@ -187,8 +189,10 @@ public class MainActivity extends AppCompatActivity {
             //und der songList hinzufuegen, damit alle ordner angezeigt werden
             for (File musicFolder : foldersInCurrentFolder) {
                 String folderName = musicFolder.getName().toLowerCase().replace("_", " ");
-                songList.add(new Song(-1L, folderName, "", musicFolder, folderName, NO_ALBUM_COVER, 0));
+                songList.add(new Song(-1L, folderName, "", "", musicFolder, folderName, NO_ALBUM_COVER, 0));
             }
+
+            this.currentFolderName = currentFolder.getName();
 
             //jetzt alle Songs (bzw. Ordner) holen
             getSongList(currentFolder.getAbsolutePath());
@@ -242,6 +246,7 @@ public class MainActivity extends AppCompatActivity {
                         MediaStore.Audio.Media.DATA,
                         MediaStore.Audio.Media.DISPLAY_NAME,
                         MediaStore.Audio.Media.ALBUM_ID,
+                        MediaStore.Audio.Media.ALBUM,
                         MediaStore.Audio.Media.DURATION,
                 },
                 MediaStore.Audio.Media.DATA + " LIKE ? AND " + MediaStore.Audio.Media.DATA + " NOT LIKE ? ",
@@ -256,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
             int artistColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int displayColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
             int albumIdColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+            int albumColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
             int songLengthColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
 
             String albumCover = "";
@@ -264,13 +270,16 @@ public class MainActivity extends AppCompatActivity {
                 long thisId = musicCursor.getLong(idColumn);
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
+                if (thisArtist.equals("<unknown>"))
+                    thisArtist = currentFolderName;
                 String displayName = musicCursor.getString(displayColumn);
                 int songLength = musicCursor.getInt(songLengthColumn);
                 //jeder song im ordner hat die selbe album id und damit auch das selbe cover, d.h. nur einmal abfragen
                 if (albumCover.equals("")) {
                     albumCover = getAlbumCover(musicCursor.getLong(albumIdColumn));
                 }
-                songList.add(new Song(thisId, thisTitle, thisArtist, null, displayName, albumCover, songLength));
+                String thisAlbum = musicCursor.getString(albumColumn);
+                songList.add(new Song(thisId, thisTitle, thisArtist, thisAlbum, null, displayName, albumCover, songLength));
             } while (musicCursor.moveToNext());
             musicCursor.close();
         }

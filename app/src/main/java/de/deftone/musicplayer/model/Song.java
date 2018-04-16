@@ -11,15 +11,17 @@ public class Song implements Serializable {
     private long id;
     private String title;
     private String artist;
+    private String album;
     private File file;
     private String fileName;
     private String albumCover;
     private int songLength;
 
-    public Song(long id, String title, String artist, File file, String fileName, String albumCover, int songLength) {
+    public Song(long id, String title, String artist, String album, File file, String fileName, String albumCover, int songLength) {
         this.id = id;
         this.title = title;
         this.artist = artist;
+        this.album = album;
         this.file = file;
         this.fileName = fileName;
         this.albumCover = albumCover;
@@ -32,6 +34,10 @@ public class Song implements Serializable {
 
     public String getTitle() {
         return title;
+    }
+
+    public String getAlbum() {
+        return album;
     }
 
     public long getID() {
