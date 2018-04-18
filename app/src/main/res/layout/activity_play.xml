@@ -104,7 +104,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
-                    android:src="@drawable/ic_play_white_65pd" />
+                    android:src="@drawable/ic_pause_white_65pd" />
 
                 <ImageButton
                     android:id="@+id/play_next_button"

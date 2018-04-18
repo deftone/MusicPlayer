@@ -251,6 +251,7 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
                 Log.e("MUSIC SERVICE", "Error setting data source", e);
             }
         }
+        buildNotification();
         return songTitle;
     }
 
@@ -293,10 +294,12 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
                 //bei Next und Previous darf die Oberflaeche nicht angepasst werden
                 case ACTION_PAUSE:
                     player.pause();
+                    isPausing = true;
                     buildNotification();
                     break;
                 case ACTION_PLAY:
                     player.start();
+                    isPausing = false;
                     buildNotification();
                     break;
                 case ACTION_PREV:

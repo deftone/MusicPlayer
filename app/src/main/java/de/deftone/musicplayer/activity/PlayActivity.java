@@ -33,7 +33,7 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
 import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
 import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 
-//todo: play und pause zwar einheitlich in gui oder notification, aber nicht daziwschen synchronisiert :(
+//todo: play und pause zwar einheitlich in gui oder notification - notification weiss ich nicht wie, aber screen lock buttons sind jetzt synchron :)
 //todo: album name anzeigen - im titel?
 
 /**
@@ -106,6 +106,10 @@ public class PlayActivity extends AppCompatActivity {
                 musicService.setSongLengthTextView(songLengthTextView);
                 musicService.setAlbumCoverImageView(albumCover);
                 musicBound = true;
+
+                //song direkt abspielen
+                playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+                musicService.playSong(songId, true);
             }
 
             @Override
@@ -132,6 +136,13 @@ public class PlayActivity extends AppCompatActivity {
             }
         });
         seekBar.setOnSeekBarChangeListener(new SeekbarChangeListener());
+
+        //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
+        if (musicServiceIntent == null) {
+            musicServiceIntent = new Intent(this, MusicService.class);
+            bindService(musicServiceIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(musicServiceIntent);
+        }
     }
 
     private void showAlbumCover(List<Song> songList) {
@@ -140,18 +151,10 @@ public class PlayActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
-        if (musicServiceIntent == null) {
-            musicServiceIntent = new Intent(this, MusicService.class);
-            bindService(musicServiceIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            startService(musicServiceIntent);
-        }
-        //todo: hier ist der ansatzpunkt den play/pause button zu aktualisieren!
-        //aber wieder die alten probleme mit play pause, dass uri fehlt und so...
-//        if (isPlaying())
-//            playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
-//        else
-//            playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+        if (isPlaying())
+            playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+        else
+            playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
     }
 
     @Override
