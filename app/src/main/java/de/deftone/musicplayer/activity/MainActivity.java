@@ -10,6 +10,7 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerViewSongs;
     private int REQUEST_CODE = 12345;
     private String currentFolderName;
+    private String parentFolderName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +63,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        //titel des collapsed toolbars
+        CollapsingToolbarLayout collapsingToolbarLayout = findViewById(R.id.toolbar_layout);
+        collapsingToolbarLayout.setTitle("Music Player");
+        collapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(android.R.color.transparent));
 
         //defaultmaessig ist der Music folder der startfolder
         File musicMainFolder = Environment.getExternalStoragePublicDirectory("Music");
@@ -193,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             this.currentFolderName = currentFolder.getName();
+            this.parentFolderName = currentFolder.getParentFile().getName();
 
             //jetzt alle Songs (bzw. Ordner) holen
             getSongList(currentFolder.getAbsolutePath());
@@ -270,15 +278,17 @@ public class MainActivity extends AppCompatActivity {
                 long thisId = musicCursor.getLong(idColumn);
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
-                if (thisArtist.equals("<unknown>"))
-                    thisArtist = currentFolderName;
                 String displayName = musicCursor.getString(displayColumn);
+                String thisAlbum = musicCursor.getString(albumColumn);
+                if (thisArtist.equals("<unknown>")) {
+                    thisArtist = parentFolderName;
+                    thisAlbum = currentFolderName;
+                }
                 int songLength = musicCursor.getInt(songLengthColumn);
                 //jeder song im ordner hat die selbe album id und damit auch das selbe cover, d.h. nur einmal abfragen
                 if (albumCover.equals("")) {
                     albumCover = getAlbumCover(musicCursor.getLong(albumIdColumn));
                 }
-                String thisAlbum = musicCursor.getString(albumColumn);
                 songList.add(new Song(thisId, thisTitle, thisArtist, thisAlbum, null, displayName, albumCover, songLength));
             } while (musicCursor.moveToNext());
             musicCursor.close();

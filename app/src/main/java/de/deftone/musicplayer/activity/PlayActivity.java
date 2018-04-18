@@ -34,7 +34,6 @@ import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
 import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 
 //todo: play und pause zwar einheitlich in gui oder notification - notification weiss ich nicht wie, aber screen lock buttons sind jetzt synchron :)
-//todo: album name anzeigen - im titel?
 
 /**
  * Created by deftone on 02.04.18.
@@ -57,6 +56,8 @@ public class PlayActivity extends AppCompatActivity {
     ImageButton repeatSongBtton;
     @BindView(R.id.shuffle_button)
     ImageButton shuffleButton;
+    @BindView(R.id.song_album)
+    TextView albumTextView;
     @BindView(R.id.song_artist)
     TextView artistTextView;
     @BindView(R.id.song_title)
@@ -79,11 +80,11 @@ public class PlayActivity extends AppCompatActivity {
         songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
         songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
 
-        //init with songtigle and "play" symbol and also cover
+        //init with artist in toolbartitle, songtigle and also cover
         songTextView.setText(songList.get(songId).getTitle());
         artistTextView.setText(songList.get(songId).getArtist());
+        albumTextView.setText(songList.get(songId).getAlbum());
         songLengthTextView.setText(MusicService.convertMilliSecondsToMMSS(songList.get(songId).getSongLength()));
-        playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
         showAlbumCover(songList);
         //diese zeilen code auch in MusicService, am besten hier eine funktion - ah, da muss man wieder saemtliches uebergeben, wenn statisch... erstmal so lassen
         Bitmap albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
