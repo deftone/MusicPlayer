@@ -22,7 +22,7 @@
             android:text="artist zz"
             android:textColor="@color/white"
             android:textSize="12pt"
-            android:textStyle="bold" />
+            android:textStyle="normal" />
 
     </LinearLayout>
 
@@ -65,7 +65,7 @@
                 android:text="album zz"
                 android:textColor="@color/white"
                 android:textSize="8pt"
-                android:textStyle="bold" />
+                android:textStyle="normal" />
 
         </LinearLayout>
 
@@ -83,14 +83,12 @@
                 android:text="song title xy"
                 android:textColor="@color/white"
                 android:textSize="10pt"
-                android:textStyle="bold" />
+                android:textStyle="normal" />
 
         </LinearLayout>
 
 
         <!--media buttons-->
-        <!--todo: bessere icons, besonders die aussen-->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -106,8 +104,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
-                    android:paddingEnd="50dp"
-                    android:src="@drawable/repeat" />
+                    android:paddingEnd="30dp"
+                    android:src="@drawable/icon_50_repeat_none" />
 
 
                 <ImageButton
@@ -115,21 +113,23 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
-                    android:src="@drawable/ic_skip_previous_white_55dp" />
+                    android:paddingEnd="12dp"
+                    android:src="@drawable/icon_55_prev" />
 
                 <ImageButton
                     android:id="@+id/play_pause_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
-                    android:src="@drawable/ic_pause_white_65pd" />
+                    android:paddingEnd="12dp"
+                    android:src="@drawable/icon_75_pause" />
 
                 <ImageButton
                     android:id="@+id/play_next_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
-                    android:src="@drawable/ic_skip_next_white_55pd" />
+                    android:src="@drawable/icon_55_next" />
 
 
                 <ImageButton
@@ -137,8 +137,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
-                    android:paddingStart="50dp"
-                    android:src="@drawable/random" />
+                    android:paddingStart="30dp"
+                    android:src="@drawable/icon_50_inorder" />
 
 
             </TableRow>
@@ -166,7 +166,7 @@
                     android:text="0:00"
                     android:textColor="@color/white"
                     android:textSize="7pt"
-                    android:textStyle="bold" />
+                    android:textStyle="normal" />
 
                 <SeekBar
                     android:id="@+id/seek_bar"
@@ -181,7 +181,7 @@
                     android:text="9:99"
                     android:textColor="@color/white"
                     android:textSize="7pt"
-                    android:textStyle="bold" />
+                    android:textStyle="normal" />
 
             </TableRow>
         </LinearLayout>
