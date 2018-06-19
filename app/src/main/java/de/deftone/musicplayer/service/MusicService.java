@@ -40,6 +40,10 @@ import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
 
 public class MusicService extends IntentService implements MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
+    public static final int REPEAT_NONE = 0;
+    public static final int REPEAT_ONE = 1;
+    public static final int REPEAT_ALL = 2;
+
     private static final String CHANNEL_ID = "chanelId";
     private static final int NOTIFICATION_ID = 1;
     private static final String ACTION_PLAY = "Play";
@@ -56,7 +60,9 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
     private Song songPlaying;
     private Random rand;
     private boolean shuffle = false;
-    private boolean repeat = false;
+    private boolean repeatNone = true;
+    private boolean repeatOne = false;
+    private boolean repeatAll = false;
     private boolean isPausing = false;
     //todo: das geht evtl besser, s.u.
     private TextView songTextView;
@@ -129,12 +135,29 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         return shuffle;
     }
 
-    public boolean setRepeatSong() {
-        if (repeat) repeat = false;
-        else repeat = true;
-        return repeat;
+    public int setRepeatSong() {
+        //es gibt 3 moeglichkeiten: repeat none (default) -> repeat one -> repeat all
+        //vorher war none
+        if (repeatNone) {
+            repeatNone = false;
+            repeatOne = true;
+            return REPEAT_ONE;
+        }
+        //vorher war einer
+        if (repeatOne) {
+            repeatOne = false;
+            repeatAll = true;
+            return REPEAT_ALL;
+        }
+        //vorher war alle
+        if (repeatAll) {
+            repeatAll = false;
+            repeatNone = true;
+            return REPEAT_NONE;
+        }
+        //default (hier sollte es aber gar nicht reinlaufen..)
+        return REPEAT_NONE;
     }
-
 
     /**
      * Eigenschaften des Players, die die PlayActivity benoetigt
@@ -199,15 +222,22 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
                     newSong++;
             }
             songPosnInList = newSong;
-        } else if (repeat) {
+        } else if (repeatOne) {
             //hier ist songPosnInList unveraendert, damit der Song nocheinmal gespielt wird
         } else {
+            //d.h. repeat none
             songPosnInList++;
             //beim letzten lied angekommen wird wieder das letzte lied gestartet
             //voellig egal wieviele ordner am anfang der liste sind, einfach das ++ rueckgaengig machen
-            if (songPosnInList >= songs.size() - 1) {
-                player.stop();
-                return "";
+            if (songPosnInList >= songs.size()) {
+                if (repeatAll) {
+                    //wieder von vorne anfangen
+                    songPosnInList = 1;
+                } else {
+                    songPosnInList--;
+                    player.stop();
+                    return "Ende";
+                }
             }
         }
         songTitle = playSong(songPosnInList, updateViewComponents);

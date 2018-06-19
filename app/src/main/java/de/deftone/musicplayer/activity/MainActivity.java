@@ -11,9 +11,11 @@ import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,12 +33,10 @@ import de.deftone.musicplayer.R;
 import de.deftone.musicplayer.adapter.SongAdapter;
 import de.deftone.musicplayer.model.Song;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
     //todo: equalizer in settings hinzufuegen
-    //todo: in der liste suchen, nicth neue activity zum suchen (mit recycler view einfacher??)
     //todo: 2 card views, eine optimierte fuer artists bzw. alben - so wie bei tanss
     //todo: merken wo man war, nicht wieder an anfang - das funktioniert glaub ich nur, wenn ich fragments benutze..
-    //todo: den band namen anzeigen - jetzt stehen ueberall die ordner namen
 
     private static final String BUNDLE_RECYCLER_LAYOUT = "MainActivity.recycler.layout";
     public static final String INTENT_SONGLIST = "songlist";
@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private int REQUEST_CODE = 12345;
     private String currentFolderName;
     private String parentFolderName;
+    private SongAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setSongsOnRecyclerView() {
         // specify an adapter
-        SongAdapter adapter = new SongAdapter(songList);
+        adapter = new SongAdapter(songList);
         recyclerViewSongs.setAdapter(adapter);
         adapter.setListener(new SongAdapter.Listener() {
             @Override
@@ -120,6 +121,23 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        final MenuItem searchItem = menu.findItem(R.id.action_search);
+        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        searchView.setOnQueryTextListener(this);
+
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String query) {
+        adapter.filter(query);
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        adapter.filter(query);
         return true;
     }
 
@@ -129,19 +147,13 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_settings:
                 //todo: equalizer
                 return true;
-            case R.id.action_search:
-                //bei klick auf seach symbol soll sich neue activity oeffnen onClickSearchButton oder so, dort auch searchView implenentieren
-                Intent searchIntent = new Intent(this, SearchActivity.class);
-                searchIntent.putExtra(INTENT_SONGLIST, (Serializable) songList);
-                startActivity(searchIntent);
-                return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
 
     @Override
-    public void onBackPressed() {
+    public void onBackPressed() {//todo: null check
         getMusicContent(songList.get(0).getFile());
         // und die ganze recyclerview neu bauen
         setSongsOnRecyclerView();
@@ -175,13 +187,18 @@ public class MainActivity extends AppCompatActivity {
         } else {
 
             //um zum uebergeordneten ordner zu wechseln - aber nur bis zum "obersten" (/storage/emulated)
-            if (currentFolder.getAbsolutePath().equals("/storage/emulated"))
+            if (currentFolder.getAbsolutePath().equals("/storage/emulated")) {
                 return;
+            }
+
+            this.currentFolderName = currentFolder.getName();
+            this.parentFolderName = currentFolder.getParentFile().getName();
 
             //wenn nicht der oberste ordner, dann liste neu befuellen
             songList.clear();
             if (!currentFolder.getAbsolutePath().equals("/storage/emulated/0")) {
-                songList.add(new Song(-1, "", "..", "", currentFolder.getParentFile(), "", NO_ALBUM_COVER, 0));
+                songList.add(new Song(-1, "../" + parentFolderName, "", "",
+                        currentFolder.getParentFile(), "", NO_ALBUM_COVER, 0));
             }
 
             //alle ordner pfade aus aktuellem ordner holen
@@ -198,9 +215,6 @@ public class MainActivity extends AppCompatActivity {
                 String folderName = musicFolder.getName().toLowerCase().replace("_", " ");
                 songList.add(new Song(-1L, folderName, "", "", musicFolder, folderName, NO_ALBUM_COVER, 0));
             }
-
-            this.currentFolderName = currentFolder.getName();
-            this.parentFolderName = currentFolder.getParentFile().getName();
 
             //jetzt alle Songs (bzw. Ordner) holen
             getSongList(currentFolder.getAbsolutePath());

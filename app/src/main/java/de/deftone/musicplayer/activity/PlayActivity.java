@@ -32,6 +32,9 @@ import de.deftone.musicplayer.service.MusicService;
 import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONGLIST;
 import static de.deftone.musicplayer.activity.MainActivity.INTENT_SONG_ID;
 import static de.deftone.musicplayer.activity.MainActivity.NO_ALBUM_COVER;
+import static de.deftone.musicplayer.service.MusicService.REPEAT_ALL;
+import static de.deftone.musicplayer.service.MusicService.REPEAT_NONE;
+import static de.deftone.musicplayer.service.MusicService.REPEAT_ONE;
 
 //todo: play und pause zwar einheitlich in gui oder notification - notification weiss ich nicht wie, aber screen lock buttons sind jetzt synchron :)
 
@@ -109,7 +112,7 @@ public class PlayActivity extends AppCompatActivity {
                 musicBound = true;
 
                 //song direkt abspielen
-                playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+                playPauseButton.setImageResource(R.drawable.icon_75_pause);
                 musicService.playSong(songId, true);
             }
 
@@ -153,15 +156,11 @@ public class PlayActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         if (isPlaying())
-            playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+            playPauseButton.setImageResource(R.drawable.icon_75_pause);
         else
-            playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
+            playPauseButton.setImageResource(R.drawable.icon_75_play);
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
 
     @Override
     protected void onDestroy() {
@@ -181,7 +180,7 @@ public class PlayActivity extends AppCompatActivity {
         String songtitle = musicService.playNext(true);
         songTextView.setText(songtitle);
         //no matter what is was before, player ist im zustand playing
-        playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+        playPauseButton.setImageResource(R.drawable.icon_75_pause);
     }
 
     @OnClick(R.id.play_previous_button)
@@ -189,18 +188,18 @@ public class PlayActivity extends AppCompatActivity {
         String songtitle = musicService.playPrev(true);
         songTextView.setText(songtitle);
         //no matter what is was before, player ist im zustand playing
-        playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+        playPauseButton.setImageResource(R.drawable.icon_75_pause);
     }
 
     @OnClick(R.id.play_pause_button)
     void onPlayPauseButton() {
         if (isPlaying()) {
             //playback hat gespielt, d.h. jetzt pausieren
-            playPauseButton.setImageResource(R.drawable.ic_play_white_65pd);
+            playPauseButton.setImageResource(R.drawable.icon_75_play);
             musicService.pausePlayer();
         } else {
             //playback war pausiert, d.h. jetzt wieder abspielen
-            playPauseButton.setImageResource(R.drawable.ic_pause_white_65pd);
+            playPauseButton.setImageResource(R.drawable.icon_75_pause);
             musicService.playSong(songId, true);
         }
     }
@@ -208,22 +207,30 @@ public class PlayActivity extends AppCompatActivity {
     @OnClick(R.id.shuffle_button)
     void onShuffleButton() {
         if (musicService.setShuffle()) {
-            shuffleButton.setImageResource(R.drawable.random_invers);
-            showCustomToast("Shuffle on");
+            shuffleButton.setImageResource(R.drawable.icon_50_shuffle);
+//            showCustomToast("Shuffle on");
         } else {
-            shuffleButton.setImageResource(R.drawable.random);
-            showCustomToast("Shuffle off");
+            shuffleButton.setImageResource(R.drawable.icon_50_inorder);
+//            showCustomToast("Shuffle off");
         }
     }
 
     @OnClick(R.id.repeatSong_button)
     void onRepeatSongButton() {
-        if (musicService.setRepeatSong()) {
-            repeatSongBtton.setImageResource(R.drawable.repeat_invers);
-            showCustomToast("Repeat one song on");
-        } else {
-            repeatSongBtton.setImageResource(R.drawable.repeat);
-            showCustomToast("Reapeat one song off");
+        int stateRepeat = musicService.setRepeatSong();
+        switch (stateRepeat){
+            case REPEAT_NONE:
+                repeatSongBtton.setImageResource(R.drawable.icon_50_repeat_none);
+//            showCustomToast("Reapeat off");
+                break;
+            case REPEAT_ONE:
+                repeatSongBtton.setImageResource(R.drawable.icon_50_repeat_one);
+//            showCustomToast("Reapeat one");
+                break;
+            case REPEAT_ALL:
+                repeatSongBtton.setImageResource(R.drawable.icon_50_repeat);
+//            showCustomToast("Reapeat all");
+                break;
         }
     }
 
@@ -286,7 +293,7 @@ public class PlayActivity extends AppCompatActivity {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             //nur playing evtl mal rausnehmen
-            if (musicService.isPlaying() && fromUser) {
+            if (musicService != null && musicService.isPlaying() && fromUser) {
                 musicService.seek(progress);
             }
         }
