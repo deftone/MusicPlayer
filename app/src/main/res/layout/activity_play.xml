@@ -105,7 +105,7 @@
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
                     android:paddingEnd="30dp"
-                    android:src="@drawable/icon_50_repeat_none" />
+                    android:src="@drawable/icon_repeat_none" />
 
 
                 <ImageButton
@@ -114,7 +114,7 @@
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
                     android:paddingEnd="12dp"
-                    android:src="@drawable/icon_55_prev" />
+                    android:src="@drawable/icon_prev" />
 
                 <ImageButton
                     android:id="@+id/play_pause_button"
@@ -122,14 +122,14 @@
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
                     android:paddingEnd="12dp"
-                    android:src="@drawable/icon_75_pause" />
+                    android:src="@drawable/icon_pause" />
 
                 <ImageButton
                     android:id="@+id/play_next_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
-                    android:src="@drawable/icon_55_next" />
+                    android:src="@drawable/icon_next" />
 
 
                 <ImageButton
@@ -138,7 +138,7 @@
                     android:layout_height="wrap_content"
                     android:background="@color/colorLight"
                     android:paddingStart="30dp"
-                    android:src="@drawable/icon_50_inorder" />
+                    android:src="@drawable/icon_inorder" />
 
 
             </TableRow>

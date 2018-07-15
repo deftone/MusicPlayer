@@ -112,7 +112,7 @@ public class PlayActivity extends AppCompatActivity {
                 musicBound = true;
 
                 //song direkt abspielen
-                playPauseButton.setImageResource(R.drawable.icon_75_pause);
+                playPauseButton.setImageResource(R.drawable.icon_pause);
                 musicService.playSong(songId, true);
             }
 
@@ -156,9 +156,9 @@ public class PlayActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         if (isPlaying())
-            playPauseButton.setImageResource(R.drawable.icon_75_pause);
+            playPauseButton.setImageResource(R.drawable.icon_pause);
         else
-            playPauseButton.setImageResource(R.drawable.icon_75_play);
+            playPauseButton.setImageResource(R.drawable.icon_play);
     }
 
 
@@ -180,7 +180,7 @@ public class PlayActivity extends AppCompatActivity {
         String songtitle = musicService.playNext(true);
         songTextView.setText(songtitle);
         //no matter what is was before, player ist im zustand playing
-        playPauseButton.setImageResource(R.drawable.icon_75_pause);
+        playPauseButton.setImageResource(R.drawable.icon_pause);
     }
 
     @OnClick(R.id.play_previous_button)
@@ -188,18 +188,18 @@ public class PlayActivity extends AppCompatActivity {
         String songtitle = musicService.playPrev(true);
         songTextView.setText(songtitle);
         //no matter what is was before, player ist im zustand playing
-        playPauseButton.setImageResource(R.drawable.icon_75_pause);
+        playPauseButton.setImageResource(R.drawable.icon_pause);
     }
 
     @OnClick(R.id.play_pause_button)
     void onPlayPauseButton() {
         if (isPlaying()) {
             //playback hat gespielt, d.h. jetzt pausieren
-            playPauseButton.setImageResource(R.drawable.icon_75_play);
+            playPauseButton.setImageResource(R.drawable.icon_play);
             musicService.pausePlayer();
         } else {
             //playback war pausiert, d.h. jetzt wieder abspielen
-            playPauseButton.setImageResource(R.drawable.icon_75_pause);
+            playPauseButton.setImageResource(R.drawable.icon_pause);
             musicService.playSong(songId, true);
         }
     }
@@ -207,10 +207,10 @@ public class PlayActivity extends AppCompatActivity {
     @OnClick(R.id.shuffle_button)
     void onShuffleButton() {
         if (musicService.setShuffle()) {
-            shuffleButton.setImageResource(R.drawable.icon_50_shuffle);
+            shuffleButton.setImageResource(R.drawable.icon_shuffle);
 //            showCustomToast("Shuffle on");
         } else {
-            shuffleButton.setImageResource(R.drawable.icon_50_inorder);
+            shuffleButton.setImageResource(R.drawable.icon_inorder);
 //            showCustomToast("Shuffle off");
         }
     }
@@ -220,37 +220,17 @@ public class PlayActivity extends AppCompatActivity {
         int stateRepeat = musicService.setRepeatSong();
         switch (stateRepeat){
             case REPEAT_NONE:
-                repeatSongBtton.setImageResource(R.drawable.icon_50_repeat_none);
-//            showCustomToast("Reapeat off");
+                repeatSongBtton.setImageResource(R.drawable.icon_repeat_none);
                 break;
             case REPEAT_ONE:
-                repeatSongBtton.setImageResource(R.drawable.icon_50_repeat_one);
-//            showCustomToast("Reapeat one");
+                repeatSongBtton.setImageResource(R.drawable.icon_repeat_one);
                 break;
             case REPEAT_ALL:
-                repeatSongBtton.setImageResource(R.drawable.icon_50_repeat);
-//            showCustomToast("Reapeat all");
+                repeatSongBtton.setImageResource(R.drawable.icon_repeat_all);
                 break;
         }
     }
 
-    private void showCustomToast(String toastText) {
-        Context context = getApplicationContext();
-        LayoutInflater inflater = getLayoutInflater();
-        // Call toast.xml file for toast layout
-        View toastview = inflater.inflate(R.layout.toast, null);
-        //set text on toast dynamically
-        TextView toastTextView = toastview.findViewById(R.id.custom_toast);
-        toastTextView.setText(toastText);
-        //create new toast
-        Toast toast = new Toast(context);
-        // Set layout to toast
-        toast.setView(toastview);
-        toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL,
-                0, 0);
-        toast.setDuration(Toast.LENGTH_SHORT);
-        toast.show();
-    }
 
     //laenge des Lieds, aus musicService (fuer seekbar)
     public int getDuration() {
