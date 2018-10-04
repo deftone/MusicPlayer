@@ -208,10 +208,8 @@ public class PlayActivity extends AppCompatActivity {
     void onShuffleButton() {
         if (musicService.setShuffle()) {
             shuffleButton.setImageResource(R.drawable.icon_shuffle);
-//            showCustomToast("Shuffle on");
         } else {
             shuffleButton.setImageResource(R.drawable.icon_inorder);
-//            showCustomToast("Shuffle off");
         }
     }
 
