@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.audiofx.Equalizer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -34,9 +35,13 @@ import de.deftone.musicplayer.adapter.SongAdapter;
 import de.deftone.musicplayer.model.Song;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
+    //todo: bug app crash wenn noch irgendwie auf, aber die ordner liste leer ist
+    //todo: launcher icon
+    //todo: nicht so ein grosses bild auf start bildschrim, voll unpraktisch :(, besonders mit suche
     //todo: equalizer in settings hinzufuegen
     //todo: 2 card views, eine optimierte fuer artists bzw. alben - so wie bei tanss
     //todo: merken wo man war, nicht wieder an anfang - das funktioniert glaub ich nur, wenn ich fragments benutze..
+    //todo: lieber ueber app mit whatsapp teilen koennen
 
     private static final String BUNDLE_RECYCLER_LAYOUT = "MainActivity.recycler.layout";
     public static final String INTENT_SONGLIST = "songlist";
@@ -323,4 +328,18 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         super.onSaveInstanceState(outState);
         outState.putParcelable(BUNDLE_RECYCLER_LAYOUT, recyclerViewSongs.getLayoutManager().onSaveInstanceState());
     }
+
+
+//    //http://isbellj008.blogspot.com/2014/05/android-how-to-use-android-equalizer.html
+//    @Override
+//    protected void onStart() {
+//        super.onStart();
+//        Equalizer equalizer = new Equalizer(0,mediaplayer.getAudioSessionId());
+//
+//        equalizer.setEnabled(true);
+//
+//        equalizer.getNumberOfBands(); //it tells you the number of equalizer in device.
+//
+//        equalizer.getNumberOfPresets();
+//    }
 }
