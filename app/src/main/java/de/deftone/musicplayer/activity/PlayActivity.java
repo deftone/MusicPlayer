@@ -13,12 +13,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +41,8 @@ import static de.deftone.musicplayer.service.MusicService.REPEAT_ONE;
 
 /**
  * Created by deftone on 02.04.18.
+ * https://github.com/anothem/android-range-seek-bar
+ * https://mobikul.com/how-to-make-range-seekbar-or-dual-thumbs-seekbar-in-android/
  */
 
 public class PlayActivity extends AppCompatActivity {
@@ -55,6 +57,7 @@ public class PlayActivity extends AppCompatActivity {
     private int fromTime;
     private int toTime;
     private static boolean innerLoopMode = false;
+    private int songDuration;
 
     @BindView(R.id.play_pause_button)
     ImageButton playPauseButton;
@@ -78,20 +81,22 @@ public class PlayActivity extends AppCompatActivity {
     TextView songLengthTextView;
     @BindView(R.id.seek_bar)
     SeekBar seekBar;
+    @BindView(R.id.range_seek_bar)
+    RangeSeekBar rangeSeekBar;
     @BindView(R.id.album_cover)
     ImageView albumCover;
-    @BindView(R.id.from_edit)
-    EditText fromEdit;
-    @BindView(R.id.to_edit)
-    EditText toEdit;
-    @BindView(R.id.from_text)
-    TextView fromText;
-    @BindView(R.id.to_text)
-    TextView toText;
-    @BindView(R.id.sec_text)
-    TextView secText;
-    @BindView(R.id.sec_text2)
-    TextView secText2;
+//    @BindView(R.id.from_edit)
+//    EditText fromEdit;
+//    @BindView(R.id.to_edit)
+//    EditText toEdit;
+//    @BindView(R.id.from_text)
+//    TextView fromText;
+//    @BindView(R.id.to_text)
+//    TextView toText;
+//    @BindView(R.id.sec_text)
+//    TextView secText;
+//    @BindView(R.id.sec_text2)
+//    TextView secText2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,6 +157,7 @@ public class PlayActivity extends AppCompatActivity {
                     seekBar.setMax(getDuration());
                     seekBar.setProgress(getCurrentPosition());
                     positionTextView.setText(musicService.getSongPosnAnzeige());
+                    songDuration = getDuration();
 
                     //eine stelle im lied unendlich loopen lassen:
                     if (innerLoopMode && getCurrentPosition() >= toTime) {
@@ -171,7 +177,20 @@ public class PlayActivity extends AppCompatActivity {
             bindService(musicServiceIntent, musicConnection, Context.BIND_AUTO_CREATE);
             startService(musicServiceIntent);
         }
+        rangeSeekBar.setNotifyWhileDragging(true);
+        rangeSeekBar.setRangeValues(0, 100);
+        rangeSeekBar.setSelectedMinValue(20);
+        rangeSeekBar.setSelectedMaxValue(80);
+        toTime = songDuration;
+        rangeSeekBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Integer>() {
+            @Override
+            public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Integer minValue, Integer maxValue) {
+                fromTime = (int) (minValue / 100.0 * songDuration);
+                toTime = (int) (maxValue / 100.0 * songDuration);
+            }
+        });
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -231,12 +250,14 @@ public class PlayActivity extends AppCompatActivity {
         nexButton.setVisibility(visibility);
         prevButton.setVisibility(visibility);
         visibility = innerLoopMode ? View.VISIBLE : View.GONE;
-        toEdit.setVisibility(visibility);
-        fromEdit.setVisibility(visibility);
-        toText.setVisibility(visibility);
-        fromText.setVisibility(visibility);
-        secText.setVisibility(visibility);
-        secText2.setVisibility(visibility);
+        rangeSeekBar.setVisibility(visibility);
+
+//        toEdit.setVisibility(visibility);
+//        fromEdit.setVisibility(visibility);
+//        toText.setVisibility(visibility);
+//        fromText.setVisibility(visibility);
+//        secText.setVisibility(visibility);
+//        secText2.setVisibility(visibility);
     }
 
 
@@ -267,32 +288,38 @@ public class PlayActivity extends AppCompatActivity {
             playPauseButton.setImageResource(R.drawable.icon_play);
             musicService.pausePlayer();
         } else {
+            //playback war pausiert, d.h. jetzt wieder abspielen
+            playPauseButton.setImageResource(R.drawable.icon_pause);
+            musicService.playSong(songId, true);
             if (innerLoopMode) {
-                try {
-                    toTime = Integer.parseInt(toEdit.getText().toString()) * 1000;
-                    fromTime = Integer.parseInt(fromEdit.getText().toString()) * 1000;
-                    if (toTime <= fromTime) {
-                        Toast toast = Toast.makeText(getApplicationContext(),
-                                "From must be smaller than To!",
-                                Toast.LENGTH_SHORT);
-                        toast.show();
-                    } else {
-                        //don't start player if to and from are wrong!
-                        playPauseButton.setImageResource(R.drawable.icon_pause);
-                        musicService.playSong(songId, true);
-                        musicService.setToFrom(fromTime);
-                    }
-                } catch (NumberFormatException e) {
-                    Toast toast = Toast.makeText(getApplicationContext(),
-                            "Please enter To and From seconds!",
-                            Toast.LENGTH_SHORT);
-                    toast.show();
-                }
-            } else {
-                //playback war pausiert, d.h. jetzt wieder abspielen
-                playPauseButton.setImageResource(R.drawable.icon_pause);
-                musicService.playSong(songId, true);
+                musicService.setToFrom(fromTime);
             }
+//            if (innerLoopMode) {
+//                try {
+//                    toTime = Integer.parseInt(toEdit.getText().toString()) * 1000;
+//                    fromTime = Integer.parseInt(fromEdit.getText().toString()) * 1000;
+//                    if (toTime <= fromTime) {
+//                        Toast toast = Toast.makeText(getApplicationContext(),
+//                                "From must be smaller than To!",
+//                                Toast.LENGTH_SHORT);
+//                        toast.show();
+//                    } else {
+//                        //don't start player if to and from are wrong!
+//                        playPauseButton.setImageResource(R.drawable.icon_pause);
+//                        musicService.playSong(songId, true);
+//                        musicService.setToFrom(fromTime);
+//                    }
+//                } catch (NumberFormatException e) {
+//                    Toast toast = Toast.makeText(getApplicationContext(),
+//                            "Please enter To and From seconds!",
+//                            Toast.LENGTH_SHORT);
+//                    toast.show();
+//                }
+//            } else {
+//                //playback war pausiert, d.h. jetzt wieder abspielen
+//                playPauseButton.setImageResource(R.drawable.icon_pause);
+//                musicService.playSong(songId, true);
+//            }
         }
     }
 
