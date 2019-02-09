@@ -196,6 +196,10 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         player.seekTo(posn);
     }
 
+    //fuer inner loop: immer wieder bei stelle from anfangen zu spielen
+    public void setToFrom(int from) {
+        player.seekTo(from);
+    }
 
     /**
      * play, pause, next, prev funktionalitaet fuer den player, wird in PlayActivity aufgerufen

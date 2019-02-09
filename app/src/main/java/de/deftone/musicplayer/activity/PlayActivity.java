@@ -10,14 +10,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Gravity;
-import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ import static de.deftone.musicplayer.service.MusicService.REPEAT_NONE;
 import static de.deftone.musicplayer.service.MusicService.REPEAT_ONE;
 
 //todo: play und pause zwar einheitlich in gui oder notification - notification weiss ich nicht wie, aber screen lock buttons sind jetzt synchron :)
-
+//todo: ein paar absicherungen, dass to und from richtig sind, evtl bessere bestaetigung, statt on click?
 /**
  * Created by deftone on 02.04.18.
  */
@@ -51,14 +51,20 @@ public class PlayActivity extends AppCompatActivity {
     private MusicService musicService;
     private Intent musicServiceIntent;
     private boolean musicBound = false;
+    private int fromTime;
+    private int toTime;
+    private static boolean innerLoopMode = false;
 
-    private String TAG = "test: ";
     @BindView(R.id.play_pause_button)
     ImageButton playPauseButton;
     @BindView(R.id.repeatSong_button)
-    ImageButton repeatSongBtton;
+    ImageButton repeatSongButton;
     @BindView(R.id.shuffle_button)
     ImageButton shuffleButton;
+    @BindView(R.id.play_previous_button)
+    ImageButton prevButton;
+    @BindView(R.id.play_next_button)
+    ImageButton nexButton;
     @BindView(R.id.song_album)
     TextView albumTextView;
     @BindView(R.id.song_artist)
@@ -73,6 +79,18 @@ public class PlayActivity extends AppCompatActivity {
     SeekBar seekBar;
     @BindView(R.id.album_cover)
     ImageView albumCover;
+    @BindView(R.id.from_edit)
+    EditText fromEdit;
+    @BindView(R.id.to_edit)
+    EditText toEdit;
+    @BindView(R.id.from_text)
+    TextView fromText;
+    @BindView(R.id.to_text)
+    TextView toText;
+    @BindView(R.id.sec_text)
+    TextView secText;
+    @BindView(R.id.sec_text2)
+    TextView secText2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +106,6 @@ public class PlayActivity extends AppCompatActivity {
         artistTextView.setText(songList.get(songId).getArtist());
         albumTextView.setText(songList.get(songId).getAlbum());
         songLengthTextView.setText(MusicService.convertMilliSecondsToMMSS(songList.get(songId).getSongLength()));
-        showAlbumCover(songList);
         //diese zeilen code auch in MusicService, am besten hier eine funktion - ah, da muss man wieder saemtliches uebergeben, wenn statisch... erstmal so lassen
         Bitmap albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
         if (!songList.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
@@ -134,7 +151,13 @@ public class PlayActivity extends AppCompatActivity {
                     seekBar.setMax(getDuration());
                     seekBar.setProgress(getCurrentPosition());
                     positionTextView.setText(musicService.getSongPosnAnzeige());
+
+                    //eine stelle im lied unendlich loopen lassen:
+                    if (innerLoopMode && getCurrentPosition() >= toTime) {
+                        musicService.setToFrom(fromTime);
+                    }
                 }
+
                 seekHandler.postDelayed(this, 1000);
 
             }
@@ -149,8 +172,28 @@ public class PlayActivity extends AppCompatActivity {
         }
     }
 
-    private void showAlbumCover(List<Song> songList) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_play, menu);
+        return true;
     }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.inner_loop:
+                innerLoopMode = !innerLoopMode;
+                updateLayoutInnerLoop();
+                if (isPlaying()) {
+                    playPauseButton.setImageResource(R.drawable.icon_play);
+                    musicService.pausePlayer();
+                }
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
 
     @Override
     protected void onStart() {
@@ -170,6 +213,40 @@ public class PlayActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    @Override
+    public void onBackPressed() {
+        if (innerLoopMode) {
+            innerLoopMode = false;
+            updateLayoutInnerLoop();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private void updateLayoutInnerLoop() {
+        int visibility = innerLoopMode ? View.GONE : View.VISIBLE;
+        repeatSongButton.setVisibility(visibility);
+        shuffleButton.setVisibility(visibility);
+        nexButton.setVisibility(visibility);
+        prevButton.setVisibility(visibility);
+        visibility = innerLoopMode ? View.VISIBLE : View.GONE;
+        toEdit.setVisibility(visibility);
+        fromEdit.setVisibility(visibility);
+        toText.setVisibility(visibility);
+        fromText.setVisibility(visibility);
+        secText.setVisibility(visibility);
+        secText2.setVisibility(visibility);
+    }
+
+    @OnClick(R.id.to_edit)
+    void editToTime() {
+        toTime = Integer.parseInt(toEdit.getText().toString()) * 1000;
+    }
+
+    @OnClick(R.id.from_edit)
+    void editFromTime() {
+        fromTime = Integer.parseInt(fromEdit.getText().toString()) * 1000;
+    }
 
     /**
      * buttons
@@ -216,15 +293,15 @@ public class PlayActivity extends AppCompatActivity {
     @OnClick(R.id.repeatSong_button)
     void onRepeatSongButton() {
         int stateRepeat = musicService.setRepeatSong();
-        switch (stateRepeat){
+        switch (stateRepeat) {
             case REPEAT_NONE:
-                repeatSongBtton.setImageResource(R.drawable.icon_repeat_none);
+                repeatSongButton.setImageResource(R.drawable.icon_repeat_none);
                 break;
             case REPEAT_ONE:
-                repeatSongBtton.setImageResource(R.drawable.icon_repeat_one);
+                repeatSongButton.setImageResource(R.drawable.icon_repeat_one);
                 break;
             case REPEAT_ALL:
-                repeatSongBtton.setImageResource(R.drawable.icon_repeat_all);
+                repeatSongButton.setImageResource(R.drawable.icon_repeat_all);
                 break;
         }
     }
@@ -276,5 +353,4 @@ public class PlayActivity extends AppCompatActivity {
             }
         }
     }
-
 }
