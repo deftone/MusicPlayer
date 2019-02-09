@@ -277,7 +277,6 @@ public class PlayActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT);
                         toast.show();
                     } else {
-                        //playback war pausiert, d.h. jetzt wieder abspielen
                         //don't start player if to and from are wrong!
                         playPauseButton.setImageResource(R.drawable.icon_pause);
                         musicService.playSong(songId, true);
@@ -289,6 +288,10 @@ public class PlayActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT);
                     toast.show();
                 }
+            } else {
+                //playback war pausiert, d.h. jetzt wieder abspielen
+                playPauseButton.setImageResource(R.drawable.icon_pause);
+                musicService.playSong(songId, true);
             }
         }
     }
