@@ -18,6 +18,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ import static de.deftone.musicplayer.service.MusicService.REPEAT_NONE;
 import static de.deftone.musicplayer.service.MusicService.REPEAT_ONE;
 
 //todo: play und pause zwar einheitlich in gui oder notification - notification weiss ich nicht wie, aber screen lock buttons sind jetzt synchron :)
-//todo: ein paar absicherungen, dass to und from richtig sind, evtl bessere bestaetigung, statt on click?
+
 /**
  * Created by deftone on 02.04.18.
  */
@@ -101,7 +102,7 @@ public class PlayActivity extends AppCompatActivity {
         songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
         songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
 
-        //init with artist in toolbartitle, songtigle and also cover
+        //init with artist in toolbartitle, songtitle and also cover
         songTextView.setText(songList.get(songId).getTitle());
         artistTextView.setText(songList.get(songId).getArtist());
         albumTextView.setText(songList.get(songId).getAlbum());
@@ -238,15 +239,6 @@ public class PlayActivity extends AppCompatActivity {
         secText2.setVisibility(visibility);
     }
 
-    @OnClick(R.id.to_edit)
-    void editToTime() {
-        toTime = Integer.parseInt(toEdit.getText().toString()) * 1000;
-    }
-
-    @OnClick(R.id.from_edit)
-    void editFromTime() {
-        fromTime = Integer.parseInt(fromEdit.getText().toString()) * 1000;
-    }
 
     /**
      * buttons
@@ -275,9 +267,29 @@ public class PlayActivity extends AppCompatActivity {
             playPauseButton.setImageResource(R.drawable.icon_play);
             musicService.pausePlayer();
         } else {
-            //playback war pausiert, d.h. jetzt wieder abspielen
-            playPauseButton.setImageResource(R.drawable.icon_pause);
-            musicService.playSong(songId, true);
+            if (innerLoopMode) {
+                try {
+                    toTime = Integer.parseInt(toEdit.getText().toString()) * 1000;
+                    fromTime = Integer.parseInt(fromEdit.getText().toString()) * 1000;
+                    if (toTime <= fromTime) {
+                        Toast toast = Toast.makeText(getApplicationContext(),
+                                "From must be smaller than To!",
+                                Toast.LENGTH_SHORT);
+                        toast.show();
+                    } else {
+                        //playback war pausiert, d.h. jetzt wieder abspielen
+                        //don't start player if to and from are wrong!
+                        playPauseButton.setImageResource(R.drawable.icon_pause);
+                        musicService.playSong(songId, true);
+                        musicService.setToFrom(fromTime);
+                    }
+                } catch (NumberFormatException e) {
+                    Toast toast = Toast.makeText(getApplicationContext(),
+                            "Please enter To and From seconds!",
+                            Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            }
         }
     }
 
