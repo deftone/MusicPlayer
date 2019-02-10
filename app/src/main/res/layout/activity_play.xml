@@ -31,7 +31,7 @@
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="280dp">
+        android:layout_height="28dp">
 
         <ImageView
             android:id="@+id/album_cover"
@@ -99,29 +99,6 @@
                 android:layout_height="wrap_content"
                 android:gravity="center">
 
-                <!--<TextView-->
-                    <!--android:id="@+id/from_text"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:text="loop from:"-->
-                    <!--android:textColor="@color/white"-->
-                    <!--android:textSize="20dp"-->
-                    <!--android:visibility="gone" />-->
-
-                <!--<EditText-->
-                    <!--android:id="@+id/from_edit"-->
-                    <!--android:layout_width="40dp"-->
-                    <!--android:inputType="number"-->
-                    <!--android:visibility="gone" />-->
-
-                <!--<TextView-->
-                    <!--android:id="@+id/sec_text"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:paddingEnd="10dp"-->
-                    <!--android:text="sec"-->
-                    <!--android:textColor="@color/white"-->
-                    <!--android:textSize="20dp"-->
-                    <!--android:visibility="gone" />-->
-
                 <ImageButton
 
                     android:id="@+id/repeatSong_button"
@@ -165,28 +142,6 @@
                     android:paddingStart="30dp"
                     android:src="@drawable/icon_inorder" />
 
-                <!--<TextView-->
-                    <!--android:id="@+id/to_text"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:paddingStart="10dp"-->
-                    <!--android:text="loop to:"-->
-                    <!--android:textColor="@color/white"-->
-                    <!--android:textSize="20dp"-->
-                    <!--android:visibility="gone" />-->
-
-                <!--<EditText-->
-                    <!--android:id="@+id/to_edit"-->
-                    <!--android:layout_width="40dp"-->
-                    <!--android:inputType="number"-->
-                    <!--android:visibility="gone" />-->
-
-                <!--<TextView-->
-                    <!--android:id="@+id/sec_text2"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:text="sec"-->
-                    <!--android:textColor="@color/white"-->
-                    <!--android:textSize="20dp"-->
-                    <!--android:visibility="gone" />-->
             </TableRow>
 
         </LinearLayout>
@@ -248,6 +203,82 @@
             </TableRow>
         </FrameLayout>
     </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!--seekbar with horizontal padding 30dp-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="20dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:layout_marginHorizontal="@dimen/padding_seekbar"
+                android:background="@color/background" />
+        </LinearLayout>
+
+
+        <!--<ImageView-->
+        <!--android:id="@+id/ball"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:src="@drawable/ball" />-->
+
+        <!--thumb from-->
+        <LinearLayout
+            android:id="@+id/thumbFrom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textFromTime"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:background="@color/white"
+                android:text="0:30"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="15dp" />
+
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="3dp"
+                android:src="@drawable/thumb" />
+
+        </LinearLayout>
+
+
+        <!--thumb to-->
+        <LinearLayout
+            android:id="@+id/thumbTo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textToTime"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:background="@color/white"
+                android:text="1:30"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="15dp" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="3dp"
+                android:src="@drawable/thumb" />
+
+        </LinearLayout>
+
+    </FrameLayout>
 
 </LinearLayout>
 

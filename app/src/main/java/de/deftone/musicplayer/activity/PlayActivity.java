@@ -6,15 +6,19 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -37,12 +41,11 @@ import static de.deftone.musicplayer.service.MusicService.REPEAT_ALL;
 import static de.deftone.musicplayer.service.MusicService.REPEAT_NONE;
 import static de.deftone.musicplayer.service.MusicService.REPEAT_ONE;
 
-//todo: play und pause zwar einheitlich in gui oder notification - notification weiss ich nicht wie, aber screen lock buttons sind jetzt synchron :)
-
 /**
  * Created by deftone on 02.04.18.
  * https://github.com/anothem/android-range-seek-bar
  * https://mobikul.com/how-to-make-range-seekbar-or-dual-thumbs-seekbar-in-android/
+ * //todo: padding von seekbar in dimens.xml programatically holen
  */
 
 public class PlayActivity extends AppCompatActivity {
@@ -85,24 +88,93 @@ public class PlayActivity extends AppCompatActivity {
     RangeSeekBar rangeSeekBar;
     @BindView(R.id.album_cover)
     ImageView albumCover;
-//    @BindView(R.id.from_edit)
-//    EditText fromEdit;
-//    @BindView(R.id.to_edit)
-//    EditText toEdit;
-//    @BindView(R.id.from_text)
-//    TextView fromText;
-//    @BindView(R.id.to_text)
-//    TextView toText;
-//    @BindView(R.id.sec_text)
-//    TextView secText;
-//    @BindView(R.id.sec_text2)
-//    TextView secText2;
+    //    @BindView(R.id.ball)
+//    ImageView ball;
+    @BindView(R.id.thumbFrom)
+    LinearLayout thumbFrom;
+    @BindView(R.id.thumbTo)
+    LinearLayout thumbTo;
+    @BindView(R.id.textToTime)
+    TextView textToTime;
+    @BindView(R.id.textFromTime)
+    TextView textFromTime;
+    private int displayWidth;
+    private int paddingSeekbar = 30;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play);
         ButterKnife.bind(this);
+
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        displayWidth = dm.widthPixels;
+        thumbFrom.setX(paddingSeekbar);
+        textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbar));
+        //todo: songlaenge noch nicht vorhanden!!
+        thumbTo.setX(displayWidth - 2 * paddingSeekbar);
+        textToTime.setText(getDisplayTime(thumbTo.getX() - paddingSeekbar));
+
+//        final PointF startPointBall = new PointF(); // Record Start Position of 'img'
+        final PointF startPointThumb1 = new PointF(thumbFrom.getX(), thumbFrom.getY()); // Record Start Position of thumbFrom
+        final PointF startPointThumb2 = new PointF(thumbTo.getX(), thumbTo.getY()); // Record Start Position of thumbTo
+
+//        ball.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View view, MotionEvent motionEvent) {
+//                switch (motionEvent.getAction()) {
+//                    case MotionEvent.ACTION_MOVE:
+//                        ball.setX((int) (startPointBall.x + motionEvent.getX()));
+//                        startPointBall.set(ball.getX(), ball.getY());
+//                        break;
+//                    default:
+//                        break;
+//                }
+//                return true;
+//            }
+//        });
+
+
+        thumbFrom.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        float newX = startPointThumb1.x + motionEvent.getX();
+                        if (newX >= paddingSeekbar && newX < (thumbTo.getX() - 20)) {
+                            thumbFrom.setX(newX);
+                            startPointThumb1.set(thumbFrom.getX(), thumbFrom.getY());
+                            textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbar));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+
+
+        thumbTo.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        float newX = startPointThumb2.x + motionEvent.getX();
+                        if (newX <= displayWidth - 2 * paddingSeekbar && newX > (thumbFrom.getX() + 20)) {
+                            thumbTo.setX(newX);
+                            startPointThumb2.set(thumbTo.getX(), thumbTo.getY());
+                            textToTime.setText(getDisplayTime(thumbTo.getX() - paddingSeekbar));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+
 
         songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
         songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
@@ -191,6 +263,12 @@ public class PlayActivity extends AppCompatActivity {
         });
     }
 
+    //todo: skalierung stimmt noch nicht ganz, position ist etwas zu kurz!
+    private String getDisplayTime(float x) {
+        int songPositionInMilliSec = (int) (x / displayWidth * songDuration);
+        return musicService.convertMilliSecondsToMMSS(songPositionInMilliSec);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -251,13 +329,6 @@ public class PlayActivity extends AppCompatActivity {
         prevButton.setVisibility(visibility);
         visibility = innerLoopMode ? View.VISIBLE : View.GONE;
         rangeSeekBar.setVisibility(visibility);
-
-//        toEdit.setVisibility(visibility);
-//        fromEdit.setVisibility(visibility);
-//        toText.setVisibility(visibility);
-//        fromText.setVisibility(visibility);
-//        secText.setVisibility(visibility);
-//        secText2.setVisibility(visibility);
     }
 
 
