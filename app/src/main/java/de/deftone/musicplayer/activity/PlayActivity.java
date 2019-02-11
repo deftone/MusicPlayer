@@ -99,7 +99,8 @@ public class PlayActivity extends AppCompatActivity {
     @BindView(R.id.textFromTime)
     TextView textFromTime;
     private int displayWidth;
-    private int paddingSeekbar = 30;
+    private int paddingSeekbarStart = 60;
+    private int paddingSeekbarEnd = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,11 +111,9 @@ public class PlayActivity extends AppCompatActivity {
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         displayWidth = dm.widthPixels;
-        thumbFrom.setX(paddingSeekbar);
-        textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbar));
-        //todo: songlaenge noch nicht vorhanden!!
-        thumbTo.setX(displayWidth - 2 * paddingSeekbar);
-        textToTime.setText(getDisplayTime(thumbTo.getX() - paddingSeekbar));
+        thumbFrom.setX(paddingSeekbarStart);
+        thumbTo.setX(displayWidth - paddingSeekbarEnd);
+
 
 //        final PointF startPointBall = new PointF(); // Record Start Position of 'img'
         final PointF startPointThumb1 = new PointF(thumbFrom.getX(), thumbFrom.getY()); // Record Start Position of thumbFrom
@@ -142,10 +141,10 @@ public class PlayActivity extends AppCompatActivity {
                 switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_MOVE:
                         float newX = startPointThumb1.x + motionEvent.getX();
-                        if (newX >= paddingSeekbar && newX < (thumbTo.getX() - 20)) {
+                        if (newX >= paddingSeekbarStart && newX < (thumbTo.getX() - 20)) {
                             thumbFrom.setX(newX);
                             startPointThumb1.set(thumbFrom.getX(), thumbFrom.getY());
-                            textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbar));
+                            textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
                         }
                         break;
                     default:
@@ -162,10 +161,10 @@ public class PlayActivity extends AppCompatActivity {
                 switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_MOVE:
                         float newX = startPointThumb2.x + motionEvent.getX();
-                        if (newX <= displayWidth - 2 * paddingSeekbar && newX > (thumbFrom.getX() + 20)) {
+                        if (newX <= (displayWidth - paddingSeekbarEnd) && newX > (thumbFrom.getX() + 20)) {
                             thumbTo.setX(newX);
                             startPointThumb2.set(thumbTo.getX(), thumbTo.getY());
-                            textToTime.setText(getDisplayTime(thumbTo.getX() - paddingSeekbar));
+                            textToTime.setText(getDisplayTime(thumbTo.getX()));
                         }
                         break;
                     default:
@@ -184,6 +183,11 @@ public class PlayActivity extends AppCompatActivity {
         artistTextView.setText(songList.get(songId).getArtist());
         albumTextView.setText(songList.get(songId).getAlbum());
         songLengthTextView.setText(MusicService.convertMilliSecondsToMMSS(songList.get(songId).getSongLength()));
+        songDuration = songList.get(songId).getSongLength();
+        //also init inner loop seekbar:
+        textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
+        textToTime.setText(getDisplayTime(thumbTo.getX()));
+
         //diese zeilen code auch in MusicService, am besten hier eine funktion - ah, da muss man wieder saemtliches uebergeben, wenn statisch... erstmal so lassen
         Bitmap albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
         if (!songList.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
@@ -229,7 +233,6 @@ public class PlayActivity extends AppCompatActivity {
                     seekBar.setMax(getDuration());
                     seekBar.setProgress(getCurrentPosition());
                     positionTextView.setText(musicService.getSongPosnAnzeige());
-                    songDuration = getDuration();
 
                     //eine stelle im lied unendlich loopen lassen:
                     if (innerLoopMode && getCurrentPosition() >= toTime) {
@@ -263,12 +266,10 @@ public class PlayActivity extends AppCompatActivity {
         });
     }
 
-    //todo: skalierung stimmt noch nicht ganz, position ist etwas zu kurz!
     private String getDisplayTime(float x) {
-        int songPositionInMilliSec = (int) (x / displayWidth * songDuration);
+        int songPositionInMilliSec = (int) (x / (displayWidth - paddingSeekbarEnd) * songDuration);
         return musicService.convertMilliSecondsToMMSS(songPositionInMilliSec);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
