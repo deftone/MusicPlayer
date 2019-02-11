@@ -148,71 +148,52 @@
 
         <!--seekbar and time-->
 
-        <FrameLayout
+        <TableRow
+            android:id="@+id/seekbar_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="10pt"
-            android:paddingEnd="15dp"
-            android:paddingStart="15dp"
-            android:paddingTop="-17dp">
+            android:layout_marginTop="37dp">
 
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
 
-                <org.florescu.android.rangeseekbar.RangeSeekBar
-                    android:id="@+id/range_seek_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:foregroundTint="@color/colorAccent"
-                    android:visibility="gone" />
-            </TableRow>
+            <TextView
+                android:id="@+id/song_position"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0:00"
+                android:textColor="@color/white"
+                android:textSize="7pt"
+                android:textStyle="normal" />
 
-            <TableRow
+
+            <SeekBar
+                android:id="@+id/seek_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="37dp">
+                android:layout_weight="1" />
 
+            <TextView
+                android:id="@+id/song_length"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="9:99"
+                android:textColor="@color/white"
+                android:textSize="7pt"
+                android:textStyle="normal" />
 
-                <TextView
-                    android:id="@+id/song_position"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0:00"
-                    android:textColor="@color/white"
-                    android:textSize="7pt"
-                    android:textStyle="normal" />
-
-
-                <SeekBar
-                    android:id="@+id/seek_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/song_length"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="9:99"
-                    android:textColor="@color/white"
-                    android:textSize="7pt"
-                    android:textStyle="normal" />
-
-            </TableRow>
-        </FrameLayout>
+        </TableRow>
     </LinearLayout>
 
     <FrameLayout
+        android:id="@+id/range_seekbar_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:visibility="gone">
 
         <!--seekbar with horizontal padding 30dp-->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="20dp">
+            android:paddingTop="30dp">
 
             <View
                 android:layout_width="match_parent"
@@ -222,11 +203,12 @@
         </LinearLayout>
 
 
-        <!--<ImageView-->
-        <!--android:id="@+id/ball"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:src="@drawable/ball" />-->
+        <ImageView
+            android:id="@+id/ball"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="15dp"
+            android:src="@drawable/ball" />
 
         <!--thumb from-->
         <LinearLayout
@@ -244,11 +226,10 @@
                 android:textColor="@color/colorPrimaryDark"
                 android:textSize="15dp" />
 
-
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingTop="3dp"
+                android:paddingTop="13dp"
                 android:src="@drawable/thumb" />
 
         </LinearLayout>
@@ -273,7 +254,7 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingTop="3dp"
+                android:paddingTop="13dp"
                 android:src="@drawable/thumb" />
 
         </LinearLayout>

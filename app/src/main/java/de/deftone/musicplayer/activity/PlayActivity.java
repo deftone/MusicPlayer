@@ -16,13 +16,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.TableRow;
 import android.widget.TextView;
-
-import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class PlayActivity extends AppCompatActivity {
     private Intent musicServiceIntent;
     private boolean musicBound = false;
     private int fromTime;
-    private int toTime;
+    private int toTime = 30_000;  //5 min
     private static boolean innerLoopMode = false;
     private int songDuration;
 
@@ -84,12 +84,14 @@ public class PlayActivity extends AppCompatActivity {
     TextView songLengthTextView;
     @BindView(R.id.seek_bar)
     SeekBar seekBar;
-    @BindView(R.id.range_seek_bar)
-    RangeSeekBar rangeSeekBar;
+    @BindView(R.id.seekbar_layout)
+    TableRow seekbarLayout;
     @BindView(R.id.album_cover)
     ImageView albumCover;
-    //    @BindView(R.id.ball)
-//    ImageView ball;
+    @BindView(R.id.range_seekbar_layout)
+    FrameLayout rangeSeekbarLayout;
+    @BindView(R.id.ball)
+    ImageView ball;
     @BindView(R.id.thumbFrom)
     LinearLayout thumbFrom;
     @BindView(R.id.thumbTo)
@@ -108,73 +110,6 @@ public class PlayActivity extends AppCompatActivity {
         setContentView(R.layout.activity_play);
         ButterKnife.bind(this);
 
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        displayWidth = dm.widthPixels;
-        thumbFrom.setX(paddingSeekbarStart);
-        thumbTo.setX(displayWidth - paddingSeekbarEnd);
-
-
-//        final PointF startPointBall = new PointF(); // Record Start Position of 'img'
-        final PointF startPointThumb1 = new PointF(thumbFrom.getX(), thumbFrom.getY()); // Record Start Position of thumbFrom
-        final PointF startPointThumb2 = new PointF(thumbTo.getX(), thumbTo.getY()); // Record Start Position of thumbTo
-
-//        ball.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View view, MotionEvent motionEvent) {
-//                switch (motionEvent.getAction()) {
-//                    case MotionEvent.ACTION_MOVE:
-//                        ball.setX((int) (startPointBall.x + motionEvent.getX()));
-//                        startPointBall.set(ball.getX(), ball.getY());
-//                        break;
-//                    default:
-//                        break;
-//                }
-//                return true;
-//            }
-//        });
-
-
-        thumbFrom.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_MOVE:
-                        float newX = startPointThumb1.x + motionEvent.getX();
-                        if (newX >= paddingSeekbarStart && newX < (thumbTo.getX() - 20)) {
-                            thumbFrom.setX(newX);
-                            startPointThumb1.set(thumbFrom.getX(), thumbFrom.getY());
-                            textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                return true;
-            }
-        });
-
-
-        thumbTo.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_MOVE:
-                        float newX = startPointThumb2.x + motionEvent.getX();
-                        if (newX <= (displayWidth - paddingSeekbarEnd) && newX > (thumbFrom.getX() + 20)) {
-                            thumbTo.setX(newX);
-                            startPointThumb2.set(thumbTo.getX(), thumbTo.getY());
-                            textToTime.setText(getDisplayTime(thumbTo.getX()));
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                return true;
-            }
-        });
-
-
         songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
         songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
 
@@ -184,9 +119,6 @@ public class PlayActivity extends AppCompatActivity {
         albumTextView.setText(songList.get(songId).getAlbum());
         songLengthTextView.setText(MusicService.convertMilliSecondsToMMSS(songList.get(songId).getSongLength()));
         songDuration = songList.get(songId).getSongLength();
-        //also init inner loop seekbar:
-        textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
-        textToTime.setText(getDisplayTime(thumbTo.getX()));
 
         //diese zeilen code auch in MusicService, am besten hier eine funktion - ah, da muss man wieder saemtliches uebergeben, wenn statisch... erstmal so lassen
         Bitmap albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
@@ -229,46 +161,124 @@ public class PlayActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if (musicBound && musicService.isPlaying()) {
-                    //wenn playback paused ist, dann soll seekbar nicht aktualisiert werden
-                    seekBar.setMax(getDuration());
-                    seekBar.setProgress(getCurrentPosition());
-                    positionTextView.setText(musicService.getSongPosnAnzeige());
-
+                    if (!innerLoopMode) {
+                        //wenn playback paused ist, dann soll seekbar nicht aktualisiert werden
+                        seekBar.setMax(getDuration());
+                        seekBar.setProgress(getCurrentPosition());
+                        positionTextView.setText(musicService.getSongPosnAnzeige());
+                    }
                     //eine stelle im lied unendlich loopen lassen:
-                    if (innerLoopMode && getCurrentPosition() >= toTime) {
-                        musicService.setToFrom(fromTime);
+                    else {
+                        if (getCurrentPosition() >= toTime) {
+                            musicService.setToFrom(fromTime);
+                        } else {
+                            ball.setX(getPostionFromTime());
+                        }
                     }
                 }
-
                 seekHandler.postDelayed(this, 1000);
-
             }
         });
-        seekBar.setOnSeekBarChangeListener(new SeekbarChangeListener());
+        seekBar.setOnSeekBarChangeListener(new
+
+                SeekbarChangeListener());
 
         //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
-        if (musicServiceIntent == null) {
+        if (musicServiceIntent == null)
+
+        {
             musicServiceIntent = new Intent(this, MusicService.class);
             bindService(musicServiceIntent, musicConnection, Context.BIND_AUTO_CREATE);
             startService(musicServiceIntent);
         }
-        rangeSeekBar.setNotifyWhileDragging(true);
-        rangeSeekBar.setRangeValues(0, 100);
-        rangeSeekBar.setSelectedMinValue(20);
-        rangeSeekBar.setSelectedMaxValue(80);
-        toTime = songDuration;
-        rangeSeekBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Integer>() {
+    }
+
+    private void initRangeSeekbar() {
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        displayWidth = dm.widthPixels;
+        thumbFrom.setX(paddingSeekbarStart);
+        thumbTo.setX(displayWidth - paddingSeekbarEnd);
+        ball.setX(getPostionFromTime());
+
+        //also init inner loop seekbar:
+        textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
+        textToTime.setText(getDisplayTime(thumbTo.getX()));
+
+        final PointF startPointBall = new PointF(); // Record Start Position of 'img'
+        final PointF startPointFrom = new PointF(thumbFrom.getX(), thumbFrom.getY()); // Record Start Position of thumbFrom
+        final PointF startPointTo = new PointF(thumbTo.getX(), thumbTo.getY()); // Record Start Position of thumbTo
+
+        ball.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Integer minValue, Integer maxValue) {
-                fromTime = (int) (minValue / 100.0 * songDuration);
-                toTime = (int) (maxValue / 100.0 * songDuration);
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        float newX = startPointBall.x + motionEvent.getX();
+                        if (newX >= paddingSeekbarStart && newX <= (displayWidth - paddingSeekbarEnd)) {
+                            ball.setX(newX);
+                            startPointBall.set(ball.getX(), ball.getY());
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+
+        thumbFrom.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        float newX = startPointFrom.x + motionEvent.getX();
+                        if (newX >= paddingSeekbarStart && newX < (thumbTo.getX() - 20)) {
+                            thumbFrom.setX(newX);
+                            startPointFrom.set(thumbFrom.getX(), thumbFrom.getY());
+                            textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
+                            fromTime = getPositionInMilliSec(thumbFrom.getX());
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+
+
+        thumbTo.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        float newX = startPointTo.x + motionEvent.getX();
+                        if (newX <= (displayWidth - paddingSeekbarEnd) && newX > (thumbFrom.getX() + 20)) {
+                            thumbTo.setX(newX);
+                            startPointTo.set(thumbTo.getX(), thumbTo.getY());
+                            textToTime.setText(getDisplayTime(thumbTo.getX()));
+                            toTime = getPositionInMilliSec(thumbTo.getX());
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                return true;
             }
         });
     }
 
     private String getDisplayTime(float x) {
-        int songPositionInMilliSec = (int) (x / (displayWidth - paddingSeekbarEnd) * songDuration);
-        return musicService.convertMilliSecondsToMMSS(songPositionInMilliSec);
+        return musicService.convertMilliSecondsToMMSS(getPositionInMilliSec(x));
+    }
+
+    private int getPositionInMilliSec(float x) {
+        return (int) (x / (displayWidth - paddingSeekbarEnd) * songDuration);
+    }
+
+    private float getPostionFromTime() {
+        return getCurrentPosition() * ((displayWidth - paddingSeekbarEnd) / (float) songDuration);
     }
 
     @Override
@@ -284,6 +294,7 @@ public class PlayActivity extends AppCompatActivity {
             case R.id.inner_loop:
                 innerLoopMode = !innerLoopMode;
                 updateLayoutInnerLoop();
+                initRangeSeekbar();
                 if (isPlaying()) {
                     playPauseButton.setImageResource(R.drawable.icon_play);
                     musicService.pausePlayer();
@@ -328,8 +339,9 @@ public class PlayActivity extends AppCompatActivity {
         shuffleButton.setVisibility(visibility);
         nexButton.setVisibility(visibility);
         prevButton.setVisibility(visibility);
+        seekbarLayout.setVisibility(visibility);
         visibility = innerLoopMode ? View.VISIBLE : View.GONE;
-        rangeSeekBar.setVisibility(visibility);
+        rangeSeekbarLayout.setVisibility(visibility);
     }
 
 
@@ -366,32 +378,6 @@ public class PlayActivity extends AppCompatActivity {
             if (innerLoopMode) {
                 musicService.setToFrom(fromTime);
             }
-//            if (innerLoopMode) {
-//                try {
-//                    toTime = Integer.parseInt(toEdit.getText().toString()) * 1000;
-//                    fromTime = Integer.parseInt(fromEdit.getText().toString()) * 1000;
-//                    if (toTime <= fromTime) {
-//                        Toast toast = Toast.makeText(getApplicationContext(),
-//                                "From must be smaller than To!",
-//                                Toast.LENGTH_SHORT);
-//                        toast.show();
-//                    } else {
-//                        //don't start player if to and from are wrong!
-//                        playPauseButton.setImageResource(R.drawable.icon_pause);
-//                        musicService.playSong(songId, true);
-//                        musicService.setToFrom(fromTime);
-//                    }
-//                } catch (NumberFormatException e) {
-//                    Toast toast = Toast.makeText(getApplicationContext(),
-//                            "Please enter To and From seconds!",
-//                            Toast.LENGTH_SHORT);
-//                    toast.show();
-//                }
-//            } else {
-//                //playback war pausiert, d.h. jetzt wieder abspielen
-//                playPauseButton.setImageResource(R.drawable.icon_pause);
-//                musicService.playSong(songId, true);
-//            }
         }
     }
 
