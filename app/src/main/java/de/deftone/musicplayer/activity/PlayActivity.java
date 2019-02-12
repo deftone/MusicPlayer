@@ -16,12 +16,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
-import android.widget.TableRow;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -43,8 +42,6 @@ import static de.deftone.musicplayer.service.MusicService.REPEAT_ONE;
 
 /**
  * Created by deftone on 02.04.18.
- * https://github.com/anothem/android-range-seek-bar
- * https://mobikul.com/how-to-make-range-seekbar-or-dual-thumbs-seekbar-in-android/
  * //todo: padding von seekbar in dimens.xml programatically holen
  */
 
@@ -82,14 +79,14 @@ public class PlayActivity extends AppCompatActivity {
     TextView positionTextView;
     @BindView(R.id.song_length)
     TextView songLengthTextView;
-    @BindView(R.id.seek_bar)
-    SeekBar seekBar;
-    @BindView(R.id.seekbar_layout)
-    TableRow seekbarLayout;
     @BindView(R.id.album_cover)
     ImageView albumCover;
-    @BindView(R.id.range_seekbar_layout)
-    FrameLayout rangeSeekbarLayout;
+    @BindView(R.id.song_position_range)
+    TextView positionTextViewRange;
+    @BindView(R.id.song_length_range)
+    TextView songLengthTextViewRange;
+    @BindView(R.id.range_seekbar)
+    RelativeLayout rangeSeekbarLayout;
     @BindView(R.id.ball)
     ImageView ball;
     @BindView(R.id.thumbFrom)
@@ -100,9 +97,13 @@ public class PlayActivity extends AppCompatActivity {
     TextView textToTime;
     @BindView(R.id.textFromTime)
     TextView textFromTime;
+    @BindView(R.id.seekbar)
+    SeekBar seekBar;
+    @BindView(R.id.seekbar_layout)
+    LinearLayout seekbarLayout;
     private int displayWidth;
-    private int paddingSeekbarStart = 60;
-    private int paddingSeekbarEnd = 100;
+    private int paddingSeekbarStart = 110;
+    private int paddingSeekbarEnd = 150;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,23 +111,51 @@ public class PlayActivity extends AppCompatActivity {
         setContentView(R.layout.activity_play);
         ButterKnife.bind(this);
 
-        songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
-        songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
+        initLayout();
+        initRangeSeekbar();
+        musicConnection = createMusicConnection();
 
-        //init with artist in toolbartitle, songtitle and also cover
-        songTextView.setText(songList.get(songId).getTitle());
-        artistTextView.setText(songList.get(songId).getArtist());
-        albumTextView.setText(songList.get(songId).getAlbum());
-        songLengthTextView.setText(MusicService.convertMilliSecondsToMMSS(songList.get(songId).getSongLength()));
-        songDuration = songList.get(songId).getSongLength();
+        //hier der zusaetzliche thread, der seekbar nutzt, kann erst hier aufgerufen werden
+        //zyklische hintergrundprozesse sollten immer im on create starten (laeuft im hintergrund weiter)
+        // man koennte das Runnable auch als innere klasse MyRunnable implementieren, sowie mit OnSeekBarChangeListener, oder hier lassen
+        PlayActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (musicBound && musicService.isPlaying()) {
+                    if (!innerLoopMode) {
+                        //wenn playback paused ist, dann soll seekbar nicht aktualisiert werden
+                        seekBar.setMax(songDuration);
+                        seekBar.setProgress(getCurrentPosition());
+                        positionTextView.setText(musicService.getSongPosnAnzeige());
+                    }
+                    //eine stelle im lied unendlich loopen lassen:
+                    else {
+                        if (getCurrentPosition() >= toTime) {
+                            musicService.setToFrom(fromTime);
+                        } else {
+                            ball.setX(getPostionFromTime());
+                            positionTextViewRange.setText(musicService.getSongPosnAnzeige());
+                        }
+                    }
+                }
+                seekHandler.postDelayed(this, 1000);
+            }
+        });
+        seekBar.setOnSeekBarChangeListener(new SeekbarChangeListener());
 
-        //diese zeilen code auch in MusicService, am besten hier eine funktion - ah, da muss man wieder saemtliches uebergeben, wenn statisch... erstmal so lassen
-        Bitmap albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
-        if (!songList.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
-            albumCoverBitmap = BitmapFactory.decodeFile(songList.get(songId).getAlbumCover());
-        albumCover.setImageBitmap(albumCoverBitmap);
+        //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
+        if (musicServiceIntent == null) {
+            musicServiceIntent = new Intent(this, MusicService.class);
+            bindService(musicServiceIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(musicServiceIntent);
+        }
+    }
 
-        musicConnection = new ServiceConnection() {
+    /**
+     * create connection for music service
+     **/
+    private ServiceConnection createMusicConnection() {
+        return new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
@@ -138,7 +167,9 @@ public class PlayActivity extends AppCompatActivity {
                 musicService.setSongTextView(songTextView);
                 musicService.setArtistTextView(artistTextView);
                 musicService.setPositionTextView(positionTextView);
+                musicService.setPositionTextView(positionTextViewRange);
                 musicService.setSongLengthTextView(songLengthTextView);
+                musicService.setSongLengthTextView(songLengthTextViewRange);
                 musicService.setAlbumCoverImageView(albumCover);
                 musicBound = true;
 
@@ -152,96 +183,72 @@ public class PlayActivity extends AppCompatActivity {
                 musicBound = false;
             }
         };
-
-        //hier der zusaetzliche thread, der seekbar nutzt, kann erst hier aufgerufen werden
-        //zyklische hintergrundprozesse sollten immer im on create starten (laeuft im hintergrund weiter)
-        // man koennte das Runnable auch als innere klasse MyRunnable implementieren, sowie mit OnSeekBarChangeListener, oder hier lassen
-        PlayActivity.this.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                if (musicBound && musicService.isPlaying()) {
-                    if (!innerLoopMode) {
-                        //wenn playback paused ist, dann soll seekbar nicht aktualisiert werden
-                        seekBar.setMax(getDuration());
-                        seekBar.setProgress(getCurrentPosition());
-                        positionTextView.setText(musicService.getSongPosnAnzeige());
-                    }
-                    //eine stelle im lied unendlich loopen lassen:
-                    else {
-                        if (getCurrentPosition() >= toTime) {
-                            musicService.setToFrom(fromTime);
-                        } else {
-                            ball.setX(getPostionFromTime());
-                        }
-                    }
-                }
-                seekHandler.postDelayed(this, 1000);
-            }
-        });
-        seekBar.setOnSeekBarChangeListener(new
-
-                SeekbarChangeListener());
-
-        //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
-        if (musicServiceIntent == null)
-
-        {
-            musicServiceIntent = new Intent(this, MusicService.class);
-            bindService(musicServiceIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            startService(musicServiceIntent);
-        }
     }
 
+    /**
+     * init and update methods
+     **/
+
+    private void initLayout() {
+        //don't show range seekbar
+        rangeSeekbarLayout.setVisibility(View.GONE);
+
+        songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
+        songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
+
+        //init with artist in toolbartitle, songtitle and also cover
+        songTextView.setText(songList.get(songId).getTitle());
+        artistTextView.setText(songList.get(songId).getArtist());
+        albumTextView.setText(songList.get(songId).getAlbum());
+        songLengthTextView.setText(MusicService.convertMilliSecondsToMMSS(songList.get(songId).getSongLength()));
+        songDuration = songList.get(songId).getSongLength();
+
+        Bitmap albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);
+        if (!songList.get(songId).getAlbumCover().equals(NO_ALBUM_COVER))
+            albumCoverBitmap = BitmapFactory.decodeFile(songList.get(songId).getAlbumCover());
+        albumCover.setImageBitmap(albumCoverBitmap);
+    }
+
+    private void updateLayoutInnerLoop() {
+        int visibility = innerLoopMode ? View.GONE : View.VISIBLE;
+        repeatSongButton.setVisibility(visibility);
+        shuffleButton.setVisibility(visibility);
+        nexButton.setVisibility(visibility);
+        prevButton.setVisibility(visibility);
+        seekbarLayout.setVisibility(visibility);
+        visibility = innerLoopMode ? View.VISIBLE : View.GONE;
+        rangeSeekbarLayout.setVisibility(visibility);
+    }
+
+    /**
+     * eigenen range seekbar initialisieren
+     **/
     private void initRangeSeekbar() {
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         displayWidth = dm.widthPixels;
-        thumbFrom.setX(paddingSeekbarStart);
-        thumbTo.setX(displayWidth - paddingSeekbarEnd);
-        ball.setX(getPostionFromTime());
+        fromTime = getPositionInMilliSec(displayWidth / 3);
+        thumbFrom.setX(displayWidth / 3);
+        toTime = getPositionInMilliSec(displayWidth * 2 / 3);
+        thumbTo.setX(displayWidth * 2 / 3);
+        ball.setX(paddingSeekbarStart);
 
         //also init inner loop seekbar:
         textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
         textToTime.setText(getDisplayTime(thumbTo.getX()));
 
-        final PointF startPointBall = new PointF(); // Record Start Position of 'img'
         final PointF startPointFrom = new PointF(thumbFrom.getX(), thumbFrom.getY()); // Record Start Position of thumbFrom
         final PointF startPointTo = new PointF(thumbTo.getX(), thumbTo.getY()); // Record Start Position of thumbTo
-
-        ball.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_MOVE:
-                        float newX = startPointBall.x + motionEvent.getX();
-                        if (newX >= paddingSeekbarStart && newX <= (displayWidth - paddingSeekbarEnd)) {
-                            ball.setX(newX);
-                            startPointBall.set(ball.getX(), ball.getY());
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                return true;
-            }
-        });
 
         thumbFrom.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_MOVE:
-                        float newX = startPointFrom.x + motionEvent.getX();
-                        if (newX >= paddingSeekbarStart && newX < (thumbTo.getX() - 20)) {
-                            thumbFrom.setX(newX);
-                            startPointFrom.set(thumbFrom.getX(), thumbFrom.getY());
-                            textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
-                            fromTime = getPositionInMilliSec(thumbFrom.getX());
-                        }
-                        break;
-                    default:
-                        break;
+                float newX = startPointFrom.x + motionEvent.getX();
+                if (newX >= paddingSeekbarStart && newX < (thumbTo.getX() - 20)) {
+                    thumbFrom.setX(newX);
+                    startPointFrom.set(thumbFrom.getX(), thumbFrom.getY());
+                    textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
+                    fromTime = getPositionInMilliSec(thumbFrom.getX());
                 }
                 return true;
             }
@@ -269,6 +276,10 @@ public class PlayActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * util methods
+     **/
+
     private String getDisplayTime(float x) {
         return musicService.convertMilliSecondsToMMSS(getPositionInMilliSec(x));
     }
@@ -280,6 +291,24 @@ public class PlayActivity extends AppCompatActivity {
     private float getPostionFromTime() {
         return getCurrentPosition() * ((displayWidth - paddingSeekbarEnd) / (float) songDuration);
     }
+
+    //aktuelle Stelle des Songs aus musicService (fuer seekbar)
+    public int getCurrentPosition() {
+        // hier war auch noch musicService != null && && musicService.isPlaying()
+        if (musicBound && musicService.isPlaying()) {
+            return musicService.getCurrentPositionInSong();
+        } else {
+            return 0;
+        }
+    }
+
+    public boolean isPlaying() {
+        return musicService != null && musicBound && musicService.isPlaying();
+    }
+
+    /**
+     * android overwrites (menu, start, destroy, back)
+     **/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -304,7 +333,6 @@ public class PlayActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -313,7 +341,6 @@ public class PlayActivity extends AppCompatActivity {
         else
             playPauseButton.setImageResource(R.drawable.icon_play);
     }
-
 
     @Override
     protected void onDestroy() {
@@ -331,17 +358,6 @@ public class PlayActivity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
-    }
-
-    private void updateLayoutInnerLoop() {
-        int visibility = innerLoopMode ? View.GONE : View.VISIBLE;
-        repeatSongButton.setVisibility(visibility);
-        shuffleButton.setVisibility(visibility);
-        nexButton.setVisibility(visibility);
-        prevButton.setVisibility(visibility);
-        seekbarLayout.setVisibility(visibility);
-        visibility = innerLoopMode ? View.VISIBLE : View.GONE;
-        rangeSeekbarLayout.setVisibility(visibility);
     }
 
 
@@ -407,33 +423,7 @@ public class PlayActivity extends AppCompatActivity {
     }
 
 
-    //laenge des Lieds, aus musicService (fuer seekbar)
-    public int getDuration() {
-        if (musicService != null && musicBound && musicService.isPlaying()) {
-            return musicService.getDur();
-        } else {
-            return 0;
-        }
-    }
-
-    //aktuelle Stelle des Songs? aus musicService (fuer seekbar)
-    public int getCurrentPosition() {
-        // hier war auch noch musicService != null && && musicService.isPlaying()
-        if (musicBound && musicService.isPlaying()) {
-            return musicService.getCurrentPositionInSong();
-        } else {
-            return 0;
-        }
-    }
-
-
-    public boolean isPlaying() {
-        if (musicService != null && musicBound)
-            return musicService.isPlaying();
-        return false;
-    }
-
-    //innere Klasse fuer den seekbarChangeListener, da der musicService sonst null ist
+    //    //innere Klasse fuer den seekbarChangeListener, da der musicService sonst null ist
     private class SeekbarChangeListener implements SeekBar.OnSeekBarChangeListener {
 
         @Override

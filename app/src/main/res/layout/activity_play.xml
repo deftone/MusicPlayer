@@ -146,27 +146,135 @@
 
         </LinearLayout>
 
-        <!--seekbar and time-->
 
-        <TableRow
+        <!--range seekbar -->
+        <RelativeLayout
+            android:id="@+id/range_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="20dp">
+
+                <TextView
+                    android:id="@+id/song_position_range"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp"
+                    android:text="0:00"
+                    android:textColor="@color/white"
+                    android:textSize="7pt"
+                    android:textStyle="normal" />
+
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_weight="1"
+                    android:paddingTop="10dp">
+
+                    <View
+                        android:layout_width="wrap_content"
+                        android:layout_height="1dp"
+                        android:background="@color/background" />
+                </LinearLayout>
+
+
+                <TextView
+                    android:id="@+id/song_length_range"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingEnd="10dp"
+                    android:text="9:99"
+                    android:textColor="@color/white"
+                    android:textSize="7pt"
+                    android:textStyle="normal" />
+            </LinearLayout>
+
+
+            <ImageView
+                android:id="@+id/ball"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="20dp"
+                android:src="@drawable/ball" />
+
+            <!--thumb from-->
+            <LinearLayout
+                android:id="@+id/thumbFrom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textFromTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="20dp"
+                    android:background="@color/white"
+                    android:text="0:30"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textSize="15dp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="13dp"
+                    android:src="@drawable/thumb" />
+
+            </LinearLayout>
+
+
+            <!--thumb to-->
+            <LinearLayout
+                android:id="@+id/thumbTo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textToTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="20dp"
+                    android:background="@color/white"
+                    android:text="1:30"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textSize="15dp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="13dp"
+                    android:src="@drawable/thumb" />
+
+            </LinearLayout>
+        </RelativeLayout>
+
+        <!--android seekbar for normal mode -->
+        <LinearLayout
             android:id="@+id/seekbar_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="37dp">
-
+            android:layout_marginTop="30dp"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/song_position"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="-3dp"
+                android:paddingStart="10dp"
                 android:text="0:00"
                 android:textColor="@color/white"
                 android:textSize="7pt"
                 android:textStyle="normal" />
 
-
             <SeekBar
-                android:id="@+id/seek_bar"
+                android:id="@+id/seekbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
@@ -175,91 +283,15 @@
                 android:id="@+id/song_length"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="-3dp"
+                android:paddingEnd="10dp"
                 android:text="9:99"
                 android:textColor="@color/white"
                 android:textSize="7pt"
                 android:textStyle="normal" />
 
-        </TableRow>
+        </LinearLayout>
     </LinearLayout>
-
-    <FrameLayout
-        android:id="@+id/range_seekbar_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone">
-
-        <!--seekbar with horizontal padding 30dp-->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="30dp">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:layout_marginHorizontal="@dimen/padding_seekbar"
-                android:background="@color/background" />
-        </LinearLayout>
-
-
-        <ImageView
-            android:id="@+id/ball"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="15dp"
-            android:src="@drawable/ball" />
-
-        <!--thumb from-->
-        <LinearLayout
-            android:id="@+id/thumbFrom"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/textFromTime"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:background="@color/white"
-                android:text="0:30"
-                android:textColor="@color/colorPrimaryDark"
-                android:textSize="15dp" />
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="13dp"
-                android:src="@drawable/thumb" />
-
-        </LinearLayout>
-
-
-        <!--thumb to-->
-        <LinearLayout
-            android:id="@+id/thumbTo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/textToTime"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:background="@color/white"
-                android:text="1:30"
-                android:textColor="@color/colorPrimaryDark"
-                android:textSize="15dp" />
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="13dp"
-                android:src="@drawable/thumb" />
-
-        </LinearLayout>
-
-    </FrameLayout>
 
 </LinearLayout>
 
