@@ -262,8 +262,14 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
             songTitle = songs.get(songId).getTitle();
             //gui darf nur im app modus angepasst werden, wenn im Screensaver oder androidmenu der next/prev button gedrueckt wird, darf die gui nicht angepasst werden
             if (updateViewComponentes) {
-                artistTextView.setText(songs.get(songId).getArtist());
-                songTextView.setText(songs.get(songId).getTitle());
+                String artist = songs.get(songId).getArtist();
+                if (artist.length() > 25)
+                    artist = artist.substring(0, 25) + " ...";
+                artistTextView.setText(artist);
+                String title = songs.get(songId).getTitle();
+                if (title.length() > 35)
+                    title = title.substring(0, 35) + " ...";
+                songTextView.setText(title);
                 positionTextView.setText(getSongPosnAnzeige());
                 songLengthTextView.setText(convertMilliSecondsToMMSS(songs.get(songId).getSongLength()));
                 albumCoverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_cover);

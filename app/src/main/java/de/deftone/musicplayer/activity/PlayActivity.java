@@ -42,7 +42,6 @@ import static de.deftone.musicplayer.service.MusicService.REPEAT_ONE;
 
 /**
  * Created by deftone on 02.04.18.
- * //todo: padding von seekbar in dimens.xml programatically holen
  */
 
 public class PlayActivity extends AppCompatActivity {
@@ -50,7 +49,6 @@ public class PlayActivity extends AppCompatActivity {
     private List<Song> songList;
     private int songId;
     private Handler seekHandler = new Handler();
-    private ServiceConnection musicConnection;
     private MusicService musicService;
     private Intent musicServiceIntent;
     private boolean musicBound = false;
@@ -58,6 +56,9 @@ public class PlayActivity extends AppCompatActivity {
     private int toTime = 30_000;  //5 min
     private static boolean innerLoopMode = false;
     private int songDuration;
+    private int displayWidth;
+    private int paddingSeekbarStart = 110;
+    private int paddingSeekbarEnd = 150;
 
     @BindView(R.id.play_pause_button)
     ImageButton playPauseButton;
@@ -101,9 +102,7 @@ public class PlayActivity extends AppCompatActivity {
     SeekBar seekBar;
     @BindView(R.id.seekbar_layout)
     LinearLayout seekbarLayout;
-    private int displayWidth;
-    private int paddingSeekbarStart = 110;
-    private int paddingSeekbarEnd = 150;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,43 +111,20 @@ public class PlayActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         initLayout();
-        initRangeSeekbar();
-        musicConnection = createMusicConnection();
 
-        //hier der zusaetzliche thread, der seekbar nutzt, kann erst hier aufgerufen werden
-        //zyklische hintergrundprozesse sollten immer im on create starten (laeuft im hintergrund weiter)
-        // man koennte das Runnable auch als innere klasse MyRunnable implementieren, sowie mit OnSeekBarChangeListener, oder hier lassen
-        PlayActivity.this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (musicBound && musicService.isPlaying()) {
-                    if (!innerLoopMode) {
-                        //wenn playback paused ist, dann soll seekbar nicht aktualisiert werden
-                        seekBar.setMax(songDuration);
-                        seekBar.setProgress(getCurrentPosition());
-                        positionTextView.setText(musicService.getSongPosnAnzeige());
-                    }
-                    //eine stelle im lied unendlich loopen lassen:
-                    else {
-                        if (getCurrentPosition() >= toTime) {
-                            musicService.setToFrom(fromTime);
-                        } else {
-                            ball.setX(getPostionFromTime());
-                            positionTextViewRange.setText(musicService.getSongPosnAnzeige());
-                        }
-                    }
-                }
-                seekHandler.postDelayed(this, 1000);
-            }
-        });
-        seekBar.setOnSeekBarChangeListener(new SeekbarChangeListener());
-
+        ServiceConnection musicConnection = createMusicConnection();
         //Intent an MusicService "hallo ich bin da, gib mir deinen service", wenn er noch nicht da ist, verbinde mich damit
         if (musicServiceIntent == null) {
             musicServiceIntent = new Intent(this, MusicService.class);
             bindService(musicServiceIntent, musicConnection, Context.BIND_AUTO_CREATE);
             startService(musicServiceIntent);
         }
+
+        //add thread to update seekbar (zyklische hintergrundprozesse sollten immer im on create starten )
+        PlayActivity.this.runOnUiThread(new SeekbarRunnable());
+        //add listener to seekbar
+        seekBar.setOnSeekBarChangeListener(new SeekbarChangeListener());
+
     }
 
     /**
@@ -172,7 +148,6 @@ public class PlayActivity extends AppCompatActivity {
                 musicService.setSongLengthTextView(songLengthTextViewRange);
                 musicService.setAlbumCoverImageView(albumCover);
                 musicBound = true;
-
                 //song direkt abspielen
                 playPauseButton.setImageResource(R.drawable.icon_pause);
                 musicService.playSong(songId, true);
@@ -196,10 +171,11 @@ public class PlayActivity extends AppCompatActivity {
         songList = new ArrayList<>((ArrayList<Song>) getIntent().getSerializableExtra(INTENT_SONGLIST));
         songId = getIntent().getIntExtra(INTENT_SONG_ID, 1);
 
-        //init with artist in toolbartitle, songtitle and also cover
-        songTextView.setText(songList.get(songId).getTitle());
-        artistTextView.setText(songList.get(songId).getArtist());
-        albumTextView.setText(songList.get(songId).getAlbum());
+        //init album text and  cover (rest is done in musicService
+        String album = songList.get(songId).getAlbum();
+        if (album.length() > 45)
+            album = album.substring(0, 40) + " ...";
+        albumTextView.setText(album);
         songLengthTextView.setText(MusicService.convertMilliSecondsToMMSS(songList.get(songId).getSongLength()));
         songDuration = songList.get(songId).getSongLength();
 
@@ -227,6 +203,7 @@ public class PlayActivity extends AppCompatActivity {
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         displayWidth = dm.widthPixels;
+        //put thumbs to 1/3 and 2/3 of width
         fromTime = getPositionInMilliSec(displayWidth / 3);
         thumbFrom.setX(displayWidth / 3);
         toTime = getPositionInMilliSec(displayWidth * 2 / 3);
@@ -281,7 +258,7 @@ public class PlayActivity extends AppCompatActivity {
      **/
 
     private String getDisplayTime(float x) {
-        return musicService.convertMilliSecondsToMMSS(getPositionInMilliSec(x));
+        return MusicService.convertMilliSecondsToMMSS(getPositionInMilliSec(x));
     }
 
     private int getPositionInMilliSec(float x) {
@@ -294,7 +271,6 @@ public class PlayActivity extends AppCompatActivity {
 
     //aktuelle Stelle des Songs aus musicService (fuer seekbar)
     public int getCurrentPosition() {
-        // hier war auch noch musicService != null && && musicService.isPlaying()
         if (musicBound && musicService.isPlaying()) {
             return musicService.getCurrentPositionInSong();
         } else {
@@ -312,7 +288,6 @@ public class PlayActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_play, menu);
         return true;
     }
@@ -422,8 +397,34 @@ public class PlayActivity extends AppCompatActivity {
         }
     }
 
+    //innere KLasse fuer das runable zum seekbar aktualisieren
+    private class SeekbarRunnable implements Runnable {
 
-    //    //innere Klasse fuer den seekbarChangeListener, da der musicService sonst null ist
+        @Override
+        public void run() {
+            if (musicBound && musicService.isPlaying()) {
+                if (!innerLoopMode) {
+                    //wenn playback paused ist, dann soll seekbar nicht aktualisiert werden
+                    seekBar.setMax(songDuration);
+                    seekBar.setProgress(getCurrentPosition());
+                    positionTextView.setText(musicService.getSongPosnAnzeige());
+                }
+                //eine stelle im lied unendlich loopen lassen:
+                else {
+                    if (getCurrentPosition() >= toTime) {
+                        musicService.setToFrom(fromTime);
+                    } else {
+                        ball.setX(getPostionFromTime());
+                        positionTextViewRange.setText(musicService.getSongPosnAnzeige());
+                    }
+                }
+            }
+            seekHandler.postDelayed(this, 500);
+        }
+    }
+
+
+    //innere Klasse fuer den seekbarChangeListener, da der musicService sonst null ist
     private class SeekbarChangeListener implements SeekBar.OnSeekBarChangeListener {
 
         @Override
