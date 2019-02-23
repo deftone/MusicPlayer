@@ -219,6 +219,22 @@ public class PlayActivity extends AppCompatActivity {
 
         final PointF startPointFrom = new PointF(thumbFrom.getX(), thumbFrom.getY()); // Record Start Position of thumbFrom
         final PointF startPointTo = new PointF(thumbTo.getX(), thumbTo.getY()); // Record Start Position of thumbTo
+        final PointF startPointBall = new PointF(ball.getX(), ball.getY());
+
+        ball.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        ball.setX((int) (startPointBall.x + motionEvent.getX()));
+                        startPointBall.set(ball.getX(), ball.getY());
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
 
         thumbFrom.setOnTouchListener(new View.OnTouchListener() {
             @Override
