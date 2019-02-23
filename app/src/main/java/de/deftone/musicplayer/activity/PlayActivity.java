@@ -58,7 +58,7 @@ public class PlayActivity extends AppCompatActivity {
     private int songDuration;
     private int displayWidth;
     private int paddingSeekbarStart = 110;
-    private int paddingSeekbarEnd = 150;
+    private int paddingSeekbarEnd = 150; //warum ist das hier groesser???
 
     @BindView(R.id.play_pause_button)
     ImageButton playPauseButton;
@@ -208,10 +208,13 @@ public class PlayActivity extends AppCompatActivity {
         thumbFrom.setX(displayWidth / 3);
         toTime = getPositionInMilliSec(displayWidth * 2 / 3);
         thumbTo.setX(displayWidth * 2 / 3);
+        //ball am anfang der seekbar
         ball.setX(paddingSeekbarStart);
+        //ball am ende der seekbar
+//        ball.setX(displayWidth - paddingSeekbarEnd);
 
         //also init inner loop seekbar:
-        textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
+        textFromTime.setText(getDisplayTime(thumbFrom.getX()));
         textToTime.setText(getDisplayTime(thumbTo.getX()));
 
         final PointF startPointFrom = new PointF(thumbFrom.getX(), thumbFrom.getY()); // Record Start Position of thumbFrom
@@ -224,7 +227,7 @@ public class PlayActivity extends AppCompatActivity {
                 if (newX >= paddingSeekbarStart && newX < (thumbTo.getX() - 20)) {
                     thumbFrom.setX(newX);
                     startPointFrom.set(thumbFrom.getX(), thumbFrom.getY());
-                    textFromTime.setText(getDisplayTime(thumbFrom.getX() - paddingSeekbarStart));
+                    textFromTime.setText(getDisplayTime(thumbFrom.getX()));
                     fromTime = getPositionInMilliSec(thumbFrom.getX());
                 }
                 return true;
@@ -262,11 +265,19 @@ public class PlayActivity extends AppCompatActivity {
     }
 
     private int getPositionInMilliSec(float x) {
-        return (int) (x / (displayWidth - paddingSeekbarEnd) * songDuration);
+        return (int) (
+                (x - paddingSeekbarStart)
+                        /
+                        (displayWidth - (paddingSeekbarStart + paddingSeekbarEnd))
+                        * songDuration);
     }
 
     private float getPostionFromTime() {
-        return getCurrentPosition() * ((displayWidth - paddingSeekbarEnd) / (float) songDuration);
+        return (getCurrentPosition())
+                *
+                ((displayWidth - (paddingSeekbarStart + paddingSeekbarEnd))
+                        / (float) songDuration)
+                + paddingSeekbarStart;
     }
 
     //aktuelle Stelle des Songs aus musicService (fuer seekbar)
