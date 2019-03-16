@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
+import android.media.audiofx.Equalizer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -24,12 +25,15 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import de.deftone.musicplayer.R;
+import de.deftone.musicplayer.dialog.SpinnerDialog;
 import de.deftone.musicplayer.model.Song;
 import de.deftone.musicplayer.service.MusicService;
 
@@ -42,6 +46,11 @@ import static de.deftone.musicplayer.service.MusicService.REPEAT_ONE;
 
 /**
  * Created by deftone on 02.04.18.
+ */
+
+/**
+ * equalizer
+ * //http://isbellj008.blogspot.com/2014/05/android-how-to-use-android-equalizer.html
  */
 
 public class PlayActivity extends AppCompatActivity {
@@ -59,6 +68,7 @@ public class PlayActivity extends AppCompatActivity {
     private int displayWidth;
     private int paddingSeekbarStart = 110;
     private int paddingSeekbarEnd = 150; //warum ist das hier groesser???
+    private Equalizer equalizer;
 
     @BindView(R.id.play_pause_button)
     ImageButton playPauseButton;
@@ -102,7 +112,7 @@ public class PlayActivity extends AppCompatActivity {
     SeekBar seekBar;
     @BindView(R.id.seekbar_layout)
     LinearLayout seekbarLayout;
-
+    private HashMap<Short, String> equalizerNames = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,6 +161,15 @@ public class PlayActivity extends AppCompatActivity {
                 //song direkt abspielen
                 playPauseButton.setImageResource(R.drawable.icon_pause);
                 musicService.playSong(songId, true);
+
+                equalizer = new Equalizer(0, musicService.getPlayer().getAudioSessionId());
+                equalizer.setEnabled(true);
+                equalizer.getNumberOfBands(); //it tells you the number of equalizer in device.
+                equalizer.getNumberOfPresets();
+                int noPresets = equalizer.getNumberOfPresets();
+                for (short presetValue = 0; presetValue < noPresets; presetValue++) {
+                    equalizerNames.put(presetValue, equalizer.getPresetName(presetValue));
+                }
             }
 
             @Override
@@ -314,6 +333,23 @@ public class PlayActivity extends AppCompatActivity {
                     playPauseButton.setImageResource(R.drawable.icon_play);
                     musicService.pausePlayer();
                 }
+                return true;
+            case R.id.equalizer:
+                List<String> names = Arrays.asList("eins", "zwei");
+//todo: nicht immer einen neuen! und das layout verbessern!!
+                SpinnerDialog spinnerDialog = new SpinnerDialog(this, names, new SpinnerDialog.DialogListener() {
+                    public void cancelled() {
+                        // do your code here
+                    }
+
+                    public void ready(int n) {
+                        // do your code here
+                    }
+                });
+
+                spinnerDialog.show();
+//                equalizer.usePreset(++eqBand);
+
                 return true;
         }
         return super.onOptionsItemSelected(item);

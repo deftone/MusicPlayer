@@ -76,6 +76,10 @@ public class MusicService extends IntentService implements MediaPlayer.OnErrorLi
         super("Heinz");
     }
 
+    public MediaPlayer getPlayer() {
+        return player;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();

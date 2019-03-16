@@ -4,6 +4,13 @@
     tools:context="de.deftone.musicplayer.activity.PlayActivity">
 
     <item
+        android:id="@+id/equalizer"
+        android:icon="@drawable/equalizer2"
+        android:orderInCategory="100"
+        android:title="@string/equalizer"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/inner_loop"
         android:icon="@drawable/inner_loop"
         android:orderInCategory="100"
