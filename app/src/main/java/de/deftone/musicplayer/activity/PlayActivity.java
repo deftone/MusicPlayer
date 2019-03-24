@@ -76,6 +76,18 @@ public class PlayActivity extends AppCompatActivity {
     private BiMap<Short, String> equalizerMap = HashBiMap.create();
     private List<String> equalizerList;
 
+    public Equalizer getEqualizer() {
+        return equalizer;
+    }
+
+    public BiMap<Short, String> getEqualizerMap() {
+        return equalizerMap;
+    }
+
+    public List<String> getEqualizerList() {
+        return equalizerList;
+    }
+
     @BindView(R.id.play_pause_button)
     ImageButton playPauseButton;
     @BindView(R.id.repeatSong_button)
@@ -344,17 +356,7 @@ public class PlayActivity extends AppCompatActivity {
                 return true;
             case R.id.equalizer:
                 if (spinnerDialog == null)
-                    spinnerDialog = new SpinnerDialog(this, equalizerList, new SpinnerDialog.DialogListener() {
-                        public void cancelled() {
-                            // do nothing
-                        }
-
-                        public void clickOk(int index) {
-                            String eqName = equalizerList.get(index);
-                            short eqBand = equalizerMap.inverse().get(eqName);
-                            equalizer.usePreset(eqBand);
-                        }
-                    });
+                    spinnerDialog = new SpinnerDialog(this, this);
                 spinnerDialog.show();
                 return true;
         }
