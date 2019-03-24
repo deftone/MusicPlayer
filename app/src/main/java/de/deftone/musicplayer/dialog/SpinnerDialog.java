@@ -39,7 +39,7 @@ public class SpinnerDialog extends Dialog {
 
         setContentView(R.layout.spinner_dialog);
         mSpinner = findViewById(R.id.dialog_spinner);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(mContext, android.R.layout.simple_spinner_dropdown_item, mList);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(mContext,  R.layout.spinner_item_layout, mList);
         mSpinner.setAdapter(adapter);
 
         Button buttonOK = findViewById(R.id.dialogOK);
