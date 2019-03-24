@@ -19,7 +19,7 @@ public class SpinnerDialog extends Dialog {
     private Spinner mSpinner;
 
     public interface DialogListener {
-        public void ready(int n);
+        public void clickOk(int n);
 
         public void cancelled();
     }
@@ -47,7 +47,7 @@ public class SpinnerDialog extends Dialog {
         buttonOK.setOnClickListener(new android.view.View.OnClickListener() {
             public void onClick(View v) {
                 int n = mSpinner.getSelectedItemPosition();
-                mReadyListener.ready(n);
+                mReadyListener.clickOk(n);
                 SpinnerDialog.this.dismiss();
             }
         });

@@ -24,10 +24,13 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -69,6 +72,9 @@ public class PlayActivity extends AppCompatActivity {
     private int paddingSeekbarStart = 110;
     private int paddingSeekbarEnd = 150; //warum ist das hier groesser???
     private Equalizer equalizer;
+    private SpinnerDialog spinnerDialog;
+    private BiMap<Short, String> equalizerMap = HashBiMap.create();
+    private List<String> equalizerList;
 
     @BindView(R.id.play_pause_button)
     ImageButton playPauseButton;
@@ -112,7 +118,7 @@ public class PlayActivity extends AppCompatActivity {
     SeekBar seekBar;
     @BindView(R.id.seekbar_layout)
     LinearLayout seekbarLayout;
-    private HashMap<Short, String> equalizerNames = new HashMap<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,8 +174,10 @@ public class PlayActivity extends AppCompatActivity {
                 equalizer.getNumberOfPresets();
                 int noPresets = equalizer.getNumberOfPresets();
                 for (short presetValue = 0; presetValue < noPresets; presetValue++) {
-                    equalizerNames.put(presetValue, equalizer.getPresetName(presetValue));
+                    equalizerMap.put(presetValue, equalizer.getPresetName(presetValue));
                 }
+                Stream<String> stream = equalizerMap.values().stream();
+                equalizerList = stream.collect(Collectors.toList());
             }
 
             @Override
@@ -335,21 +343,19 @@ public class PlayActivity extends AppCompatActivity {
                 }
                 return true;
             case R.id.equalizer:
-                List<String> names = Arrays.asList("eins", "zwei");
-//todo: nicht immer einen neuen! und das layout verbessern!!
-                SpinnerDialog spinnerDialog = new SpinnerDialog(this, names, new SpinnerDialog.DialogListener() {
-                    public void cancelled() {
-                        // do your code here
-                    }
+                if (spinnerDialog == null)
+                    spinnerDialog = new SpinnerDialog(this, equalizerList, new SpinnerDialog.DialogListener() {
+                        public void cancelled() {
+                            // do nothing
+                        }
 
-                    public void ready(int n) {
-                        // do your code here
-                    }
-                });
-
+                        public void clickOk(int index) {
+                            String eqName = equalizerList.get(index);
+                            short eqBand = equalizerMap.inverse().get(eqName);
+                            equalizer.usePreset(eqBand);
+                        }
+                    });
                 spinnerDialog.show();
-//                equalizer.usePreset(++eqBand);
-
                 return true;
         }
         return super.onOptionsItemSelected(item);
